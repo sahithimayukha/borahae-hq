@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import { AppSidebar, MobileAppNavigation } from "@/components/app/app-sidebar";
+import { AppFooter } from "@/components/app/app-footer";
 
 type AppShellProps = {
   children: ReactNode;
@@ -14,7 +15,10 @@ export function AppShell({ children, activePath }: AppShellProps) {
 
         <section className="space-y-6">
           <MobileAppNavigation activePath={activePath} />
+
           {children}
+
+          <AppFooter />
         </section>
       </div>
     </main>

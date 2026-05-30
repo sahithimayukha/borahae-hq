@@ -17,7 +17,7 @@ type AppSidebarProps = {
 export function AppSidebar({ activePath = "/dashboard" }: AppSidebarProps) {
   return (
     <aside className="hidden rounded-4xl border border-[#2A2A2A] bg-[#0B0B0B] p-6 shadow-[0_20px_70px_rgba(0,0,0,0.45)] md:block">
-      <Link href="/" className="font-era text-3xl text-white!">
+      <Link href="/dashboard" className="font-era text-3xl text-white!">
         BorahaeHQ
       </Link>
 
@@ -58,7 +58,7 @@ export function MobileAppNavigation({
   return (
     <div className="space-y-4 md:hidden">
       <div className="rounded-4xlrder border-[#2A2A2A] bg-[#0B0B0B] p-5 shadow-[0_20px_70px_rgba(0,0,0,0.45)]">
-        <Link href="/" className="font-era text-2xl text-white!">
+        <Link href="/dashboard" className="font-era text-2xl text-white!">
           BorahaeHQ
         </Link>
 
