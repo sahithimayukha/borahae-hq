@@ -1,20 +1,66 @@
 import Link from "next/link";
 import { LogoutButton } from "@/components/auth/logout-button";
 
-const navigationItems = [
-  { label: "Dashboard", href: "/dashboard" },
-  { label: "Calendar", href: "/calendar" },
-  { label: "Fan Projects", href: "/projects" },
-  { label: "Memory Vault", href: "/vault" },
-  { label: "My Profile", href: "/profile" },
-  { label: "Settings", href: "/settings" },
+const normalNavigationItems = [
+  {
+    label: "Dashboard",
+    href: "/dashboard",
+  },
+  {
+    label: "Calendar",
+    href: "/calendar",
+  },
+  {
+    label: "Fan Projects",
+    href: "/projects",
+  },
+  {
+    label: "Memory Vault",
+    href: "/vault",
+  },
+  {
+    label: "My Profile",
+    href: "/profile",
+  },
+  {
+    label: "Settings",
+    href: "/settings",
+  },
 ];
 
 type AppSidebarProps = {
   activePath?: string;
+  isAdmin?: boolean;
 };
 
-export function AppSidebar({ activePath = "/dashboard" }: AppSidebarProps) {
+function getNavigationItems(isAdmin: boolean) {
+  if (!isAdmin) {
+    return normalNavigationItems;
+  }
+
+  return [
+    ...normalNavigationItems,
+    {
+      label: "Admin",
+      href: "/admin",
+    },
+  ];
+}
+
+function isNavigationItemActive(activePath: string, itemHref: string) {
+  if (itemHref === "/admin") {
+    return activePath === "/admin" || activePath.startsWith("/admin/");
+  }
+
+  return activePath === itemHref;
+}
+
+export function AppSidebar({
+  activePath = "/dashboard",
+  isAdmin = false,
+}: AppSidebarProps) {
+  const navigationItems = getNavigationItems(isAdmin);
+
   return (
     <aside className="hidden rounded-4xl border border-[#2A2A2A] bg-[#0B0B0B] p-6 shadow-[0_20px_70px_rgba(0,0,0,0.45)] md:block">
       <Link href="/dashboard" className="font-era text-3xl text-white!">
@@ -27,7 +73,7 @@ export function AppSidebar({ activePath = "/dashboard" }: AppSidebarProps) {
 
       <nav className="mt-8 space-y-2">
         {navigationItems.map((item) => {
-          const isActive = activePath === item.href;
+          const isActive = isNavigationItemActive(activePath, item.href);
 
           return (
             <Link
@@ -54,10 +100,13 @@ export function AppSidebar({ activePath = "/dashboard" }: AppSidebarProps) {
 
 export function MobileAppNavigation({
   activePath = "/dashboard",
+  isAdmin = false,
 }: AppSidebarProps) {
+  const navigationItems = getNavigationItems(isAdmin);
+
   return (
     <div className="space-y-4 md:hidden">
-      <div className="rounded-4xlrder border-[#2A2A2A] bg-[#0B0B0B] p-5 shadow-[0_20px_70px_rgba(0,0,0,0.45)]">
+      <div className="rounded-4xl border border-[#2A2A2A] bg-[#0B0B0B] p-5 shadow-[0_20px_70px_rgba(0,0,0,0.45)]">
         <Link href="/dashboard" className="font-era text-2xl text-white!">
           BorahaeHQ
         </Link>
@@ -67,9 +116,9 @@ export function MobileAppNavigation({
         </p>
       </div>
 
-      <nav className="flex gap-3 overflow-x-auto rounded-4xlrder border-[#2A2A2A] bg-[#0B0B0B] p-3 shadow-[0_20px_70px_rgba(0,0,0,0.45)]">
+      <nav className="flex gap-3 overflow-x-auto rounded-4xl border border-[#2A2A2A] bg-[#0B0B0B] p-3 shadow-[0_20px_70px_rgba(0,0,0,0.45)]">
         {navigationItems.map((item) => {
-          const isActive = activePath === item.href;
+          const isActive = isNavigationItemActive(activePath, item.href);
 
           return (
             <Link

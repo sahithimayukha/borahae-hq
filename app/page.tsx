@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { PublicFooter } from "@/components/app/public-footer";
 
 const featureCards = [
   {
@@ -289,16 +290,7 @@ export default function HomePage() {
         </section>
 
         <footer className="py-10">
-          <div className="rounded-4xl border border-[#2A2A2A] bg-[#0B0B0B] p-6">
-            <p className="font-era text-lg text-white!">BorahaeHQ</p>
-
-            <p className="mt-3 max-w-3xl text-xs leading-5 text-white/60">
-              BorahaeHQ is an unofficial fan-made platform for ARMY
-              organization, events, fan projects, and personal memories. It is
-              not affiliated with BTS, BIGHIT MUSIC, HYBE, Weverse, or any
-              official artist entity.
-            </p>
-          </div>
+          <PublicFooter />
         </footer>
       </div>
     </main>

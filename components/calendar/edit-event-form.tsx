@@ -14,6 +14,7 @@ const eventCategories = [
   "Anniversary",
   "Birthday",
   "Comeback",
+  "Concert",
   "Streaming",
   "Voting",
   "Fan Event",

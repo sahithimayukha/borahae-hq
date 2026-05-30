@@ -6,7 +6,7 @@ import { DeleteProjectButton } from "@/components/projects/delete-project-button
 import { EditProjectForm } from "@/components/projects/edit-project-form";
 import { ProjectForm } from "@/components/projects/project-form";
 import { createClient } from "@/lib/supabase/server";
-import type { FanProject, Profile } from "@/types/database";
+import type { FanProject } from "@/types/database";
 
 const projectCategories = [
   "All",
@@ -419,14 +419,6 @@ export default async function ProjectsPage({
     redirect("/login");
   }
 
-  const { data: profileData } = await supabase
-    .from("profiles")
-    .select("*")
-    .eq("user_id", user.id)
-    .maybeSingle();
-
-  const profile = (profileData ?? null) as Profile | null;
-
   let publicProjectsQuery = supabase
     .from("fan_projects")
     .select("*")
@@ -472,24 +464,6 @@ export default async function ProjectsPage({
         title="Discover ARMY Projects"
         description="Explore approved charity drives, birthday cafés, watch parties, streaming projects, meetups, and community-led ARMY moments."
       />
-
-      {profile?.is_admin ? (
-  <div className="flex justify-end">
-    <Link
-      href="/admin/projects"
-      style={{
-        color: "#FFFFFF",
-        backgroundColor: "#E11D48",
-        fontSize: "12px",
-        fontWeight: 900,
-        lineHeight: "1",
-      }}
-      className="inline-flex items-center justify-center rounded-full border border-[#E11D48] px-4 py-2 uppercase tracking-[0.14em] shadow-[0_10px_30px_rgba(225,29,72,0.28)] transition hover:-translate-y-0.5 hover:bg-[#C5163D]!"
-    >
-      Review Pending Projects
-    </Link>
-  </div>
-) : null}
 
       <ProjectForm userId={user.id} />
 

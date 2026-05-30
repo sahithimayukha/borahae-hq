@@ -200,6 +200,43 @@ export type MemoryUpdate = {
 };
 
 /* =========================================================
+   SUPPORT REQUESTS
+   ========================================================= */
+
+export type SupportRequest = {
+  id: string;
+  user_id: string;
+  account_email: string;
+  category: string;
+  message: string;
+  status: string;
+  created_at: string;
+  updated_at: string;
+};
+
+export type SupportRequestInsert = {
+  id?: string;
+  user_id: string;
+  account_email: string;
+  category: string;
+  message: string;
+  status?: string;
+  created_at?: string;
+  updated_at?: string;
+};
+
+export type SupportRequestUpdate = {
+  id?: string;
+  user_id?: string;
+  account_email?: string;
+  category?: string;
+  message?: string;
+  status?: string;
+  created_at?: string;
+  updated_at?: string;
+};
+
+/* =========================================================
    SUPABASE DATABASE TYPE
    ========================================================= */
 
@@ -231,6 +268,13 @@ export type Database = {
         Row: Memory;
         Insert: MemoryInsert;
         Update: MemoryUpdate;
+        Relationships: [];
+      };
+
+      support_requests: {
+        Row: SupportRequest;
+        Insert: SupportRequestInsert;
+        Update: SupportRequestUpdate;
         Relationships: [];
       };
     };
