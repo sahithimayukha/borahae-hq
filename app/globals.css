@@ -1,26 +1,209 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #050505;
+  --foreground: #ffffff;
+
+  --deep-purple: #111111;
+  --lavender: #e11d48;
+  --soft-lilac: #ffffff;
+  --white: #ffffff;
+  --silver-gray: #2a2a2a;
+  --muted-text: #4b4b4b;
+  --purple-glow: #e11d48;
+  --pale-lavender-glow: #f7f7f7;
+  --soft-pink-lavender: #151515;
+
+  --arirang-red: #e11d48;
+  --arirang-red-dark: #c5163d;
+  --arirang-black: #050505;
+  --arirang-black-soft: #0b0b0b;
+  --arirang-card: #ffffff;
+  --arirang-paper: #f7f7f7;
+  --arirang-border: #2a2a2a;
+  --arirang-muted: #4b4b4b;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+* {
+  box-sizing: border-box;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+html {
+  scroll-behavior: smooth;
 }
 
 body {
-  background: var(--background);
+  min-height: 100vh;
+  background:
+    radial-gradient(circle at top right, rgba(225, 29, 72, 0.18), transparent 26rem),
+    radial-gradient(circle at bottom left, rgba(225, 29, 72, 0.08), transparent 22rem),
+    linear-gradient(135deg, rgba(255, 255, 255, 0.025) 1px, transparent 1px),
+    #050505;
+  background-size: auto, auto, 18px 18px, auto;
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-inter), Arial, Helvetica, sans-serif;
+}
+
+button,
+input,
+textarea,
+select {
+  font: inherit;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+::selection {
+  background: #e11d48;
+  color: #ffffff;
+}
+
+.font-display {
+  font-family: var(--font-anton), Impact, "Arial Black", sans-serif;
+  font-weight: 400;
+  letter-spacing: -0.03em;
+  text-transform: uppercase;
+}
+
+.font-era {
+  font-family: var(--font-anton), Impact, "Arial Black", sans-serif;
+  font-weight: 400;
+  letter-spacing: 0.015em;
+  word-spacing: 0.12em;
+  line-height: 1.08;
+  text-transform: uppercase;
+}
+
+.font-era-display {
+  font-family: var(--font-anton), Impact, "Arial Black", sans-serif;
+  font-weight: 400;
+  letter-spacing: 0.02em;
+  word-spacing: 0.18em;
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+.font-era-label {
+  font-family: var(--font-inter), Arial, Helvetica, sans-serif;
+  font-weight: 900;
+  letter-spacing: 0.13em;
+  line-height: 1.15;
+  text-transform: uppercase;
+}
+
+/* ARIRANG APP THEME OVERRIDES */
+/* This forces all logged-in modules to stop looking purple. */
+
+.arirang-app {
+  color: #ffffff;
+}
+
+.arirang-app [class*="bg-white/80"],
+.arirang-app [class*="bg-white/75"],
+.arirang-app [class*="bg-white/70"],
+.arirang-app [class*="bg-white"] {
+  background-color: #ffffff !important;
+  color: #111111 !important;
+}
+
+.arirang-app [class*="bg-[#F4EDFF]"],
+.arirang-app [class*="bg-[#f4edff]"],
+.arirang-app [class*="bg-[#F7F7F7]"],
+.arirang-app [class*="bg-[#f7f7f7]"] {
+  background-color: #f7f7f7 !important;
+  color: #111111 !important;
+}
+
+.arirang-app [class*="bg-[#F7EFFF]"],
+.arirang-app [class*="bg-[#f7efff]"],
+.arirang-app [class*="bg-[#151515]"],
+.arirang-app [class*="bg-[#111111]"] {
+  background-color: #111111 !important;
+  color: #ffffff !important;
+}
+
+.arirang-app [class*="bg-[#3B1E5A]"],
+.arirang-app [class*="bg-[#3b1e5a]"],
+.arirang-app [class*="bg-[#E11D48]"],
+.arirang-app [class*="bg-[#e11d48]"] {
+  background-color: #e11d48 !important;
+  color: #ffffff !important;
+}
+
+.arirang-app [class*="text-[#3B1E5A]"],
+.arirang-app [class*="text-[#3b1e5a]"],
+.arirang-app [class*="text-[#1E1728]"],
+.arirang-app [class*="text-[#1e1728]"] {
+  color: #111111 !important;
+}
+
+.arirang-app [class*="text-[#A970FF]"],
+.arirang-app [class*="text-[#a970ff]"],
+.arirang-app [class*="text-[#E11D48]"],
+.arirang-app [class*="text-[#e11d48]"] {
+  color: #e11d48 !important;
+}
+
+.arirang-app [class*="text-[#7A7185]"],
+.arirang-app [class*="text-[#7a7185]"],
+.arirang-app [class*="text-[#B8B8B8]"],
+.arirang-app [class*="text-[#b8b8b8]"] {
+  color: #4b4b4b !important;
+}
+
+.arirang-app [class*="border-[#C9A7FF]"],
+.arirang-app [class*="border-[#c9a7ff]"],
+.arirang-app [class*="border-[#E11D48]"],
+.arirang-app [class*="border-[#e11d48]"] {
+  border-color: #e11d48 !important;
+}
+
+.arirang-app [class*="border-[#E8E6EF]"],
+.arirang-app [class*="border-[#e8e6ef]"],
+.arirang-app [class*="border-[#2A2A2A]"],
+.arirang-app [class*="border-[#2a2a2a]"] {
+  border-color: #2a2a2a !important;
+}
+
+.arirang-app input,
+.arirang-app textarea,
+.arirang-app select {
+  background-color: #ffffff !important;
+  color: #111111 !important;
+  border-color: #2a2a2a !important;
+}
+
+.arirang-app input::placeholder,
+.arirang-app textarea::placeholder {
+  color: #777777 !important;
+}
+
+.arirang-app button[type="submit"],
+.arirang-app a[class*="bg-[#3B1E5A]"],
+.arirang-app a[class*="bg-[#3b1e5a]"] {
+  background-color: #e11d48 !important;
+  color: #ffffff !important;
+}
+
+.arirang-dark-card {
+  background: #0b0b0b;
+  color: #ffffff;
+  border: 1px solid #2a2a2a;
+}
+
+.arirang-paper-card {
+  background: #ffffff;
+  color: #111111;
+  border: 1px solid #2a2a2a;
+}
+
+.arirang-red-tape {
+  background: #e11d48;
+  color: #ffffff;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
 }
