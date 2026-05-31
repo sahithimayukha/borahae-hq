@@ -29,7 +29,7 @@ type QuickActionProps = {
 };
 
 const cardClass =
-  "rounded-[2rem] border border-[#2A2A2A] bg-white p-6 text-[#111111] shadow-[0_20px_70px_rgba(0,0,0,0.35)]";
+  "rounded-[1.5rem] border border-[#2A2A2A] bg-white p-4 text-[#111111] shadow-[0_20px_70px_rgba(0,0,0,0.35)] sm:rounded-[2rem] sm:p-6";
 
 const quickActions: QuickActionProps[] = [
   {
@@ -67,14 +67,16 @@ function formatShortDate(date: string | null) {
 
 function StatCard({ label, value, description }: StatCardProps) {
   return (
-    <article className="rounded-4xl border border-[#2A2A2A] bg-white p-5 text-[#111111] shadow-[0_20px_70px_rgba(0,0,0,0.35)]">
-      <p className="font-era-label text-[10px] text-[#E11D48]">
+    <article className="rounded-3xl border border-[#2A2A2A] bg-white p-4 text-[#111111] shadow-[0_20px_70px_rgba(0,0,0,0.35)] sm:rounded-4xl sm:p-5">
+      <p className="font-era-label text-[9px] text-[#E11D48] sm:text-[10px]">
         {label}
       </p>
 
-      <p className="mt-3 text-3xl font-black text-[#111111]">{value}</p>
+      <p className="mt-3 text-2xl font-black text-[#111111] sm:text-3xl">
+        {value}
+      </p>
 
-      <p className="mt-2 text-sm leading-6 text-[#4B4B4B]">
+      <p className="mt-2 text-xs leading-5 text-[#4B4B4B] sm:text-sm sm:leading-6">
         {description}
       </p>
     </article>
@@ -83,36 +85,36 @@ function StatCard({ label, value, description }: StatCardProps) {
 
 function QuickActionsSection() {
   return (
-    <section className="relative overflow-hidden rounded-4xl border border-[#2A2A2A] bg-[#0B0B0B] p-6 shadow-[0_20px_70px_rgba(0,0,0,0.42)] sm:p-8">
+    <section className="relative overflow-hidden rounded-3xl border border-[#2A2A2A] bg-[#0B0B0B] p-4 shadow-[0_20px_70px_rgba(0,0,0,0.42)] sm:rounded-4xl sm:p-8">
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(225,29,72,0.24),transparent_34%),radial-gradient(circle_at_bottom_left,rgba(225,29,72,0.10),transparent_28%)]" />
 
-      <div className="absolute inset-0 opacity-[0.08] bg-[linear-gradient(135deg,#fff_1px,transparent_1px)]ize:18px_18px]" />
+      <div className="absolute inset-0 bg-[linear-gradient(135deg,#fff_1px,transparent_1px)] bg-size-[18px_18px] opacity-[0.08]" />
 
       <div className="relative z-10">
         <p className="font-era-label text-[10px] text-[#E11D48]">
           Quick Actions
         </p>
 
-        <h2 className="font-era-display mt-4 max-w-3xl text-5xl text-white! sm:text-6xl">
+        <h2 className="font-era-display mt-4 max-w-3xl text-4xl text-white! sm:text-6xl">
           Keep Your Hub
-          <span className="mt-3 block w-fit bg-[#E11D48] px-4 py-2 text-white!">
+          <span className="mt-2 block w-fit bg-[#E11D48] px-3 py-2 text-white! sm:mt-3 sm:px-4">
             Organized.
           </span>
         </h2>
 
-        <p className="mt-5 max-w-2xl border-l-4 border-[#E11D48] pl-4 text-sm font-semibold leading-7 text-white/75">
+        <p className="mt-5 max-w-2xl border-l-4 border-[#E11D48] pl-4 text-sm font-semibold leading-6 text-white/75 sm:leading-7">
           Open the feature you need without wandering through extra dashboard
           widgets.
         </p>
 
-        <div className="mt-8 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <div className="mt-6 grid gap-3 sm:mt-8 sm:grid-cols-2 sm:gap-4 xl:grid-cols-4">
           {quickActions.map((action) => (
             <Link
               key={action.label}
               href={action.href}
-              className="group rounded-4xl border border-white/15 bg-white p-5 text-[#111111] shadow-[0_18px_50px_rgba(0,0,0,0.2)] transition hover:-translate-y-1 hover:border-[#E11D48]"
+              className="group rounded-[1.4rem] border border-white/15 bg-white p-4 text-[#111111] shadow-[0_18px_50px_rgba(0,0,0,0.2)] transition hover:-translate-y-1 hover:border-[#E11D48] sm:rounded-4xl sm:p-5"
             >
-              <p className="font-era text-2xl leading-[1.05] text-[#111111]">
+              <p className="font-era text-xl leading-[1.05] text-[#111111] sm:text-2xl">
                 {action.label}
               </p>
 
@@ -136,9 +138,7 @@ function FeaturedProjectsCard({ projects }: FeaturedProjectsCardProps) {
     <article className={cardClass}>
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div>
-          <p className="font-era-label text-[10px] text-[#E11D48]">
-            Community
-          </p>
+          <p className="font-era-label text-[10px] text-[#E11D48]">Community</p>
 
           <h2 className="font-era mt-3 text-2xl leading-[1.08] text-[#111111]">
             Featured Fan Projects
@@ -194,10 +194,7 @@ function FeaturedProjectsCard({ projects }: FeaturedProjectsCardProps) {
   );
 }
 
-function ProfileSummary({
-  profile,
-  fallbackDisplayName,
-}: ProfileSummaryProps) {
+function ProfileSummary({ profile, fallbackDisplayName }: ProfileSummaryProps) {
   if (!profile) {
     return (
       <article className={cardClass}>
@@ -278,10 +275,7 @@ function ProfileSummary({
 
       <div className="mt-6 grid gap-3 sm:grid-cols-2">
         {details.map((detail) => (
-          <div
-            key={detail.label}
-            className="rounded-2xl bg-[#F7F7F7] p-4"
-          >
+          <div key={detail.label} className="rounded-2xl bg-[#F7F7F7] p-4">
             <p className="font-era-label text-[9px] text-[#E11D48]">
               {detail.label}
             </p>
@@ -329,11 +323,7 @@ export default async function DashboardPage() {
     { count: approvedCommunityProjectCount },
     { count: upcomingEventCount },
   ] = await Promise.all([
-    supabase
-      .from("profiles")
-      .select("*")
-      .eq("user_id", user.id)
-      .maybeSingle(),
+    supabase.from("profiles").select("*").eq("user_id", user.id).maybeSingle(),
 
     supabase
       .from("events")
@@ -346,6 +336,8 @@ export default async function DashboardPage() {
       .from("fan_projects")
       .select("*")
       .eq("status", "approved")
+      .neq("category", "Past")
+      .gte("project_date", today)
       .order("project_date", { ascending: true })
       .limit(4),
 
@@ -390,7 +382,7 @@ export default async function DashboardPage() {
     <AppShell activePath="/dashboard">
       <ArirangEraSection displayName={fallbackDisplayName} />
 
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-4">
         <StatCard
           label="Memories"
           value={memoryCount ?? 0}
@@ -424,7 +416,7 @@ export default async function DashboardPage() {
 
       <QuickActionsSection />
 
-      <div className="grid gap-6 lg:grid-cols-2">
+      <div className="grid gap-4 sm:gap-6 lg:grid-cols-2">
         <DailyMemoryPrompt />
 
         <FeaturedProjectsCard projects={featuredProjects} />

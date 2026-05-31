@@ -8,34 +8,48 @@ import { EventForm } from "@/components/calendar/event-form";
 import { createClient } from "@/lib/supabase/server";
 import type { CalendarEvent } from "@/types/database";
 
+const EVENTS_PER_PAGE = 8;
+
 const eventCategories = [
   "All",
   "Anniversary",
   "Birthday",
   "Comeback",
   "Concert",
+  "Soundcheck",
   "Streaming",
+  "Online Event",
+  "Ticketing",
   "Voting",
-  "Fan Event",
+  "Pop-Up",
+  "Exhibition",
+  "Light Show",
   "Watch Party",
   "Charity",
+  "Past",
 ];
 
-const calendarViews = ["all", "upcoming", "past"] as const;
+const calendarViews = ["upcoming", "past"] as const;
 
 type CalendarView = (typeof calendarViews)[number];
+
+type CalendarEventWithReadOnly = CalendarEvent & {
+  is_read_only?: boolean;
+};
 
 type CalendarPageProps = {
   searchParams?: Promise<{
     category?: string;
     q?: string;
     view?: string;
+    page?: string;
   }>;
 };
 
 type EventCardProps = {
-  event: CalendarEvent;
+  event: CalendarEventWithReadOnly;
   currentUserId: string;
+  today: string;
 };
 
 type CalendarToolsProps = {
@@ -48,7 +62,25 @@ type CalendarHrefOptions = {
   category: string;
   view: CalendarView;
   searchQuery: string;
+  page?: number;
 };
+
+type PaginationProps = {
+  currentPage: number;
+  totalPages: number;
+  selectedCategory: string;
+  selectedView: CalendarView;
+  searchQuery: string;
+};
+
+function getTodayInIndia() {
+  return new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Asia/Kolkata",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(new Date());
+}
 
 function formatEventDate(date: string) {
   return new Intl.DateTimeFormat("en", {
@@ -62,6 +94,7 @@ function getCalendarHref({
   category,
   view,
   searchQuery,
+  page = 1,
 }: CalendarHrefOptions) {
   const params = new URLSearchParams();
 
@@ -69,12 +102,16 @@ function getCalendarHref({
     params.set("category", category);
   }
 
-  if (view !== "all") {
+  if (view !== "upcoming") {
     params.set("view", view);
   }
 
   if (searchQuery) {
     params.set("q", searchQuery);
+  }
+
+  if (page > 1) {
+    params.set("page", page.toString());
   }
 
   const queryString = params.toString();
@@ -83,66 +120,67 @@ function getCalendarHref({
 }
 
 function getViewLabel(view: CalendarView) {
-  if (view === "upcoming") {
-    return "Upcoming Only";
-  }
-
   if (view === "past") {
-    return "Past Only";
+    return "Past Events";
   }
 
-  return "All Events";
+  return "Upcoming Events";
 }
 
 function getViewDescription(view: CalendarView) {
-  if (view === "upcoming") {
-    return "Showing events scheduled for today or later.";
-  }
-
   if (view === "past") {
-    return "Showing events that happened before today.";
+    return "Browse completed events from the BorahaeHQ archive.";
   }
 
-  return "Showing past and upcoming events together.";
+  return "Showing events scheduled for today or later.";
 }
 
-function EventCard({ event, currentUserId }: EventCardProps) {
-  const canManageEvent = event.created_by === currentUserId;
+function EventCard({ event, currentUserId, today }: EventCardProps) {
+  const isPastEvent = event.event_date < today || event.category === "Past";
+
+  const isReadOnlyEvent = event.is_read_only === true;
+
+  const canManageEvent =
+    event.created_by === currentUserId && !isPastEvent && !isReadOnlyEvent;
 
   return (
-    <article className="rounded-4xl border border-[#2A2A2A] bg-white p-6 text-[#111111] shadow-[0_20px_70px_rgba(0,0,0,0.35)]">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-        <div>
+    <article className="min-w-0 overflow-hidden rounded-3xl border border-[#2A2A2A] bg-white p-4 text-[#111111] shadow-[0_20px_70px_rgba(0,0,0,0.35)] sm:rounded-4xl sm:p-6">
+      <div className="flex min-w-0 flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+        <div className="min-w-0">
           <p className="font-era-label text-[10px] text-[#E11D48]">
             {formatEventDate(event.event_date)}
           </p>
 
-          <h2 className="font-era mt-3 text-2xl leading-[1.1] text-[#111111]">
+          <h2 className="font-era mt-3 wrap-break-wordword text-2xl leading-[1.1] text-[#111111]">
             {event.title}
           </h2>
         </div>
 
-        <span className="font-era-label inline-flex w-fit rounded-full bg-[#111111] px-4 py-2 text-[10px] text-white!">
-          {event.category}
+        <span className="font-era-label inline-flex w-fit shrink-0 rounded-full bg-[#111111] px-4 py-2 text-[10px] text-white!">
+          {isPastEvent ? "Past" : event.category}
         </span>
       </div>
 
       {event.description ? (
-        <p className="mt-5 text-sm leading-6 text-[#4B4B4B]">
+        <p className="mt-5 wrap-break-word text-sm leading-6 text-[#4B4B4B]">
           {event.description}
         </p>
       ) : null}
 
-      <div className="mt-6 flex flex-wrap gap-3 text-sm font-bold text-[#111111]">
+      <div className="mt-6 flex min-w-0 flex-wrap gap-3 text-sm font-bold text-[#111111]">
         {event.location ? (
-          <span className="rounded-full bg-[#F7F7F7] px-4 py-2">
+          <span className="max-w-full wrap-break-word rounded-full bg-[#F7F7F7] px-4 py-2">
             {event.location}
           </span>
         ) : null}
 
         {event.is_global ? (
-          <span className="rounded-full bg-[#F7F7F7] px-4 py-2">
-            Global
+          <span className="rounded-full bg-[#F7F7F7] px-4 py-2">Global</span>
+        ) : null}
+
+        {isReadOnlyEvent ? (
+          <span className="rounded-full bg-[#FFF1F3] px-4 py-2 text-[#B91C3B]">
+            Official Event
           </span>
         ) : null}
       </div>
@@ -160,10 +198,7 @@ function EventCard({ event, currentUserId }: EventCardProps) {
 
       {canManageEvent ? (
         <div className="mt-5 flex flex-wrap items-center gap-2">
-          <EditEventForm
-            event={event}
-            userId={currentUserId}
-          />
+          <EditEventForm event={event} userId={currentUserId} />
 
           <DeleteEventButton eventId={event.id} />
         </div>
@@ -178,10 +213,10 @@ function CalendarTools({
   searchQuery,
 }: CalendarToolsProps) {
   return (
-    <section className="rounded-4xl border border-[#2A2A2A] bg-[#0B0B0B] p-5 shadow-[0_20px_70px_rgba(0,0,0,0.35)]">
-      <div className="flex flex-col gap-6">
-        <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-          <div>
+    <section className="min-w-0 overflow-hidden rounded-3xl border border-[#2A2A2A] bg-[#0B0B0B] p-4 shadow-[0_20px_70px_rgba(0,0,0,0.35)] sm:rounded-4xl sm:p-5">
+      <div className="flex min-w-0 flex-col gap-6">
+        <div className="flex min-w-0 flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+          <div className="min-w-0">
             <p className="font-era-label text-[10px] text-[#E11D48]">
               Search Calendar
             </p>
@@ -191,30 +226,22 @@ function CalendarTools({
             </h2>
 
             <p className="mt-3 max-w-xl text-sm leading-6 text-white/65">
-              Search event titles using words such as birthday, anniversary,
-              watch party, streaming, or charity.
+              Search event titles using words such as concert, birthday,
+              anniversary, streaming, pop-up, or ARIRANG.
             </p>
           </div>
 
           <form
             action="/calendar"
             method="get"
-            className="flex w-full flex-col gap-3 sm:flex-row lg:max-w-xl"
+            className="flex min-w-0 w-full flex-col gap-3 sm:flex-row lg:max-w-xl"
           >
             {selectedCategory !== "All" ? (
-              <input
-                type="hidden"
-                name="category"
-                value={selectedCategory}
-              />
+              <input type="hidden" name="category" value={selectedCategory} />
             ) : null}
 
-            {selectedView !== "all" ? (
-              <input
-                type="hidden"
-                name="view"
-                value={selectedView}
-              />
+            {selectedView !== "upcoming" ? (
+              <input type="hidden" name="view" value={selectedView} />
             ) : null}
 
             <label htmlFor="event-search" className="sr-only">
@@ -233,7 +260,7 @@ function CalendarTools({
 
             <button
               type="submit"
-              className="font-era-label inline-flex items-center justify-center rounded-full bg-[#E11D48] px-6 py-3.5 text-[10px] text-white! transition hover:-translate-y-0.5 hover:bg-[#C5163D]"
+              className="font-era-label inline-flex shrink-0 items-center justify-center rounded-full bg-[#E11D48] px-6 py-3.5 text-[10px] text-white! transition hover:-translate-y-0.5 hover:bg-[#C5163D]"
             >
               Search
             </button>
@@ -245,7 +272,7 @@ function CalendarTools({
                   view: selectedView,
                   searchQuery: "",
                 })}
-                className="font-era-label inline-flex items-center justify-center rounded-full border border-white/30 bg-[#151515] px-6 py-3.5 text-[10px] text-white! transition hover:bg-[#222222]"
+                className="font-era-label inline-flex shrink-0 items-center justify-center rounded-full border border-white/30 bg-[#151515] px-6 py-3.5 text-[10px] text-white! transition hover:bg-[#222222]"
               >
                 Clear
               </Link>
@@ -270,7 +297,7 @@ function CalendarTools({
                     view,
                     searchQuery,
                   })}
-                  className={`font-era-label shrink-0 rounded-full px-4 py-2 text-[10px] transition ${
+                  className={`font-era-label rounded-full px-4 py-2 text-[10px] transition ${
                     isActive
                       ? "bg-[#E11D48] text-white!"
                       : "bg-[#151515] text-white! hover:bg-[#222222]"
@@ -292,7 +319,7 @@ function CalendarTools({
             Filter By Category
           </p>
 
-          <div className="mt-4 flex gap-3 overflow-x-auto pb-1">
+          <div className="mt-4 flex flex-wrap gap-3">
             {eventCategories.map((category) => {
               const isActive = selectedCategory === category;
 
@@ -304,7 +331,7 @@ function CalendarTools({
                     view: selectedView,
                     searchQuery,
                   })}
-                  className={`font-era-label shrink-0 rounded-full px-4 py-2 text-[10px] transition ${
+                  className={`font-era-label rounded-full px-4 py-2 text-[10px] transition ${
                     isActive
                       ? "bg-[#E11D48] text-white!"
                       : "bg-[#151515] text-white! hover:bg-[#222222]"
@@ -321,31 +348,92 @@ function CalendarTools({
   );
 }
 
+function Pagination({
+  currentPage,
+  totalPages,
+  selectedCategory,
+  selectedView,
+  searchQuery,
+}: PaginationProps) {
+  if (totalPages <= 1) {
+    return null;
+  }
+
+  return (
+    <nav
+      aria-label="Calendar pagination"
+      className="flex flex-col gap-3 rounded-3xl border border-white/10 bg-[#111111] p-4 sm:flex-row sm:items-center sm:justify-between"
+    >
+      <p className="font-era-label text-center text-[10px] text-white/70 sm:text-left">
+        Page {currentPage} of {totalPages}
+      </p>
+
+      <div className="flex items-center justify-center gap-3 sm:justify-end">
+        {currentPage > 1 ? (
+          <Link
+            href={getCalendarHref({
+              category: selectedCategory,
+              view: selectedView,
+              searchQuery,
+              page: currentPage - 1,
+            })}
+            className="font-era-label inline-flex rounded-full border border-white/20 bg-[#1A1A1A] px-5 py-3 text-[10px] text-white! transition hover:bg-[#262626]"
+          >
+            ← Previous
+          </Link>
+        ) : (
+          <span className="font-era-label inline-flex cursor-not-allowed rounded-full border border-white/10 bg-[#151515] px-5 py-3 text-[10px] text-white/25">
+            ← Previous
+          </span>
+        )}
+
+        {currentPage < totalPages ? (
+          <Link
+            href={getCalendarHref({
+              category: selectedCategory,
+              view: selectedView,
+              searchQuery,
+              page: currentPage + 1,
+            })}
+            className="font-era-label inline-flex rounded-full bg-[#E11D48] px-5 py-3 text-[10px] text-white! transition hover:bg-[#C5163D]"
+          >
+            Next →
+          </Link>
+        ) : (
+          <span className="font-era-label inline-flex cursor-not-allowed rounded-full bg-[#501522] px-5 py-3 text-[10px] text-white/35">
+            Next →
+          </span>
+        )}
+      </div>
+    </nav>
+  );
+}
+
 export default async function CalendarPage({
   searchParams,
 }: CalendarPageProps) {
   const resolvedSearchParams = await searchParams;
 
-  const searchQuery = (resolvedSearchParams?.q ?? "")
-    .trim()
-    .slice(0, 80);
+  const searchQuery = (resolvedSearchParams?.q ?? "").trim().slice(0, 80);
 
-  const requestedCategory =
-    resolvedSearchParams?.category ?? "All";
+  const requestedCategory = resolvedSearchParams?.category ?? "All";
 
-  const selectedCategory = eventCategories.includes(
-    requestedCategory,
-  )
+  const selectedCategory = eventCategories.includes(requestedCategory)
     ? requestedCategory
     : "All";
 
-  const requestedView = resolvedSearchParams?.view ?? "all";
+  const requestedView = resolvedSearchParams?.view ?? "upcoming";
 
   const selectedView: CalendarView = calendarViews.includes(
     requestedView as CalendarView,
   )
     ? (requestedView as CalendarView)
-    : "all";
+    : "upcoming";
+
+  const requestedPage = Number.parseInt(resolvedSearchParams?.page ?? "1", 10);
+
+  const currentPage =
+    Number.isFinite(requestedPage) && requestedPage > 0 ? requestedPage : 1;
 
   const supabase = await createClient();
 
@@ -357,16 +445,16 @@ export default async function CalendarPage({
     redirect("/login");
   }
 
-  const today = new Date().toISOString().slice(0, 10);
+  const today = getTodayInIndia();
 
-  let eventsQuery = supabase.from("events").select("*");
-
-  if (selectedView === "upcoming") {
-    eventsQuery = eventsQuery.gte("event_date", today);
-  }
+  let eventsQuery = supabase.from("events").select("*", {
+    count: "exact",
+  });
 
   if (selectedView === "past") {
     eventsQuery = eventsQuery.lt("event_date", today);
+  } else {
+    eventsQuery = eventsQuery.gte("event_date", today);
   }
 
   if (selectedCategory !== "All") {
@@ -374,26 +462,43 @@ export default async function CalendarPage({
   }
 
   if (searchQuery) {
-    eventsQuery = eventsQuery.ilike(
-      "title",
-      `%${searchQuery}%`,
-    );
+    eventsQuery = eventsQuery.ilike("title", `%${searchQuery}%`);
   }
 
-  eventsQuery = eventsQuery.order("event_date", {
-    ascending: selectedView !== "past",
-  });
+  const rangeStart = (currentPage - 1) * EVENTS_PER_PAGE;
+  const rangeEnd = rangeStart + EVENTS_PER_PAGE - 1;
 
-  const { data, error } = await eventsQuery;
+  eventsQuery = eventsQuery
+    .order("event_date", {
+      ascending: selectedView !== "past",
+    })
+    .range(rangeStart, rangeEnd);
 
-  const events = (data ?? []) as CalendarEvent[];
+  const { data, error, count } = await eventsQuery;
+
+  const events = (data ?? []) as CalendarEventWithReadOnly[];
+
+  const totalEvents = count ?? 0;
+
+  const totalPages = Math.max(1, Math.ceil(totalEvents / EVENTS_PER_PAGE));
+
+  if (currentPage > totalPages && totalEvents > 0) {
+    redirect(
+      getCalendarHref({
+        category: selectedCategory,
+        view: selectedView,
+        searchQuery,
+        page: totalPages,
+      }),
+    );
+  }
 
   return (
     <AppShell activePath="/calendar">
       <PageHero
         eyebrow="ARMY Calendar"
         title="Your ARIRANG Calendar"
-        description="Track anniversaries, birthdays, fan events, streaming moments, and important ARMY dates inside one organized calendar."
+        description="Track upcoming concerts, anniversaries, comeback dates, streaming moments, and important ARMY events inside one organized calendar."
       />
 
       <EventForm userId={user.id} />
@@ -405,7 +510,7 @@ export default async function CalendarPage({
       />
 
       {error ? (
-        <div className="rounded-4xlrder border-[#E11D48] bg-[#FFF1F3] p-6 text-[#B91C3B]">
+        <div className="rounded-4xl border border-[#E11D48] bg-[#FFF1F3] p-6 text-[#B91C3B]">
           <h2 className="font-era text-xl leading-[1.1]">
             Calendar Could Not Load
           </h2>
@@ -417,18 +522,16 @@ export default async function CalendarPage({
       ) : null}
 
       {!error && events.length > 0 ? (
-        <div className="space-y-5">
+        <div className="min-w-0 space-y-5">
           <div>
             <h2 className="font-era text-3xl leading-[1.05] text-white!">
-              {searchQuery
-                ? "Search Results"
-                : getViewLabel(selectedView)}
+              {searchQuery ? "Search Results" : getViewLabel(selectedView)}
             </h2>
 
             <p className="mt-2 text-sm text-white/70">
               {searchQuery
-                ? `${events.length} event result${
-                    events.length === 1 ? "" : "s"
+                ? `${totalEvents} event result${
+                    totalEvents === 1 ? "" : "s"
                   } found for “${searchQuery}”${
                     selectedCategory !== "All"
                       ? ` inside ${selectedCategory}.`
@@ -442,15 +545,24 @@ export default async function CalendarPage({
             </p>
           </div>
 
-          <div className="grid gap-5 lg:grid-cols-2">
+          <div className="grid min-w-0 gap-5 lg:grid-cols-2">
             {events.map((event) => (
               <EventCard
                 key={event.id}
                 event={event}
                 currentUserId={user.id}
+                today={today}
               />
             ))}
           </div>
+
+          <Pagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            selectedCategory={selectedCategory}
+            selectedView={selectedView}
+            searchQuery={searchQuery}
+          />
         </div>
       ) : null}
 
@@ -462,7 +574,7 @@ export default async function CalendarPage({
 
           <p className="mx-auto mt-3 max-w-md text-sm leading-6 text-[#4B4B4B]">
             {searchQuery
-              ? `We could not find an event titled “${searchQuery}”. Try another word, choose a different timeline, select another category, or reset the calendar.`
+              ? `We could not find an event titled “${searchQuery}”. Try another word, choose another category, or reset the calendar.`
               : `There are no ${getViewLabel(
                   selectedView,
                 ).toLowerCase()} in this category yet. Try another timeline or add a new event.`}
@@ -470,7 +582,7 @@ export default async function CalendarPage({
 
           {searchQuery ||
           selectedCategory !== "All" ||
-          selectedView !== "all" ? (
+          selectedView !== "upcoming" ? (
             <Link
               href="/calendar"
               className="font-era-label mt-5 inline-flex rounded-full bg-[#E11D48] px-6 py-3.5 text-[10px] text-white! transition hover:bg-[#C5163D]"

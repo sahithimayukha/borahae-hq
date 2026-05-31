@@ -74,6 +74,7 @@ export type CalendarEvent = {
   is_global: boolean;
   created_at: string;
   updated_at: string;
+  is_read_only: boolean;
 };
 
 export type CalendarEventInsert = {
@@ -88,6 +89,7 @@ export type CalendarEventInsert = {
   is_global?: boolean;
   created_at?: string;
   updated_at?: string;
+  is_read_only?: boolean;
 };
 
 export type CalendarEventUpdate = {
@@ -102,6 +104,7 @@ export type CalendarEventUpdate = {
   is_global?: boolean;
   created_at?: string;
   updated_at?: string;
+  is_read_only?: boolean;
 };
 
 /* =========================================================
@@ -122,6 +125,7 @@ export type FanProject = {
   status: string;
   created_at: string;
   updated_at: string;
+  is_read_only: boolean;
 };
 
 export type FanProjectInsert = {
@@ -138,6 +142,7 @@ export type FanProjectInsert = {
   status?: string;
   created_at?: string;
   updated_at?: string;
+  is_read_only?: boolean;
 };
 
 export type FanProjectUpdate = {
@@ -154,6 +159,7 @@ export type FanProjectUpdate = {
   status?: string;
   created_at?: string;
   updated_at?: string;
+  is_read_only?: boolean;
 };
 
 /* =========================================================
@@ -237,6 +243,151 @@ export type SupportRequestUpdate = {
 };
 
 /* =========================================================
+   OFFICIAL NOTICE IMPORT QUEUE
+   ========================================================= */
+
+export type OfficialNoticeImport = {
+  id: string;
+  source_name: string;
+  source_url: string;
+  notice_title: string;
+  notice_date: string | null;
+  raw_summary: string | null;
+  suggested_destination: string | null;
+  suggested_category: string | null;
+  review_status: string;
+  discovered_at: string;
+  reviewed_at: string | null;
+  imported_at: string | null;
+  content_hash: string | null;
+};
+
+export type OfficialNoticeImportInsert = {
+  id?: string;
+  source_name: string;
+  source_url: string;
+  notice_title: string;
+  notice_date?: string | null;
+  raw_summary?: string | null;
+  suggested_destination?: string | null;
+  suggested_category?: string | null;
+  review_status?: string;
+  discovered_at?: string;
+  reviewed_at?: string | null;
+  imported_at?: string | null;
+  content_hash?: string | null;
+};
+
+export type OfficialNoticeImportUpdate = {
+  id?: string;
+  source_name?: string;
+  source_url?: string;
+  notice_title?: string;
+  notice_date?: string | null;
+  raw_summary?: string | null;
+  suggested_destination?: string | null;
+  suggested_category?: string | null;
+  review_status?: string;
+  discovered_at?: string;
+  reviewed_at?: string | null;
+  imported_at?: string | null;
+  content_hash?: string | null;
+};
+
+/* =========================================================
+   OFFICIAL NOTICE SYNC RUNS
+   ========================================================= */
+
+export type OfficialNoticeSyncRun = {
+  id: string;
+  started_at: string;
+  finished_at: string | null;
+  run_status: string;
+  notices_checked: number;
+  notices_added: number;
+  error_message: string | null;
+};
+
+export type OfficialNoticeSyncRunInsert = {
+  id?: string;
+  started_at?: string;
+  finished_at?: string | null;
+  run_status?: string;
+  notices_checked?: number;
+  notices_added?: number;
+  error_message?: string | null;
+};
+
+export type OfficialNoticeSyncRunUpdate = {
+  id?: string;
+  started_at?: string;
+  finished_at?: string | null;
+  run_status?: string;
+  notices_checked?: number;
+  notices_added?: number;
+  error_message?: string | null;
+};
+
+/* =========================================================
+   OFFICIAL CONTENT SOURCES
+   ========================================================= */
+
+export type OfficialContentSource = {
+  id: string;
+  source_name: string;
+  source_url: string;
+  source_type: string;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+};
+
+export type OfficialContentSourceInsert = {
+  id?: string;
+  source_name: string;
+  source_url: string;
+  source_type: string;
+  is_active?: boolean;
+  created_at?: string;
+  updated_at?: string;
+};
+
+export type OfficialContentSourceUpdate = {
+  id?: string;
+  source_name?: string;
+  source_url?: string;
+  source_type?: string;
+  is_active?: boolean;
+  created_at?: string;
+  updated_at?: string;
+};
+
+/* =========================================================
+   OFFICIAL CONTENT SNAPSHOTS
+   ========================================================= */
+
+export type OfficialContentSnapshot = {
+  id: string;
+  source_id: string;
+  content_hash: string;
+  checked_at: string;
+};
+
+export type OfficialContentSnapshotInsert = {
+  id?: string;
+  source_id: string;
+  content_hash: string;
+  checked_at?: string;
+};
+
+export type OfficialContentSnapshotUpdate = {
+  id?: string;
+  source_id?: string;
+  content_hash?: string;
+  checked_at?: string;
+};
+
+/* =========================================================
    SUPABASE DATABASE TYPE
    ========================================================= */
 
@@ -277,6 +428,34 @@ export type Database = {
         Update: SupportRequestUpdate;
         Relationships: [];
       };
+
+      official_notice_imports: {
+        Row: OfficialNoticeImport;
+        Insert: OfficialNoticeImportInsert;
+        Update: OfficialNoticeImportUpdate;
+        Relationships: [];
+      };
+
+      official_notice_sync_runs: {
+        Row: OfficialNoticeSyncRun;
+        Insert: OfficialNoticeSyncRunInsert;
+        Update: OfficialNoticeSyncRunUpdate;
+        Relationships: [];
+      };
+
+      official_content_sources: {
+        Row: OfficialContentSource;
+        Insert: OfficialContentSourceInsert;
+        Update: OfficialContentSourceUpdate;
+        Relationships: [];
+      };
+
+      official_content_snapshots: {
+        Row: OfficialContentSnapshot;
+        Insert: OfficialContentSnapshotInsert;
+        Update: OfficialContentSnapshotUpdate;
+        Relationships: [];
+      };
     };
 
     Views: Record<string, never>;
@@ -286,6 +465,26 @@ export type Database = {
         Args: Record<PropertyKey, never>;
         Returns: boolean;
       };
+
+      can_run_official_source_sync: {
+        Args: Record<PropertyKey, never>;
+        Returns: boolean;
+      };
+
+      publish_official_notice: {
+        Args: {
+          notice_id: string;
+          destination: string;
+          public_title: string;
+          public_category: string;
+          public_date: string;
+          public_description: string;
+          public_location: string;
+          public_link: string;
+          public_is_global?: boolean;
+        };
+        Returns: Json;
+      };
     };
 
     Enums: Record<string, never>;
@@ -293,3 +492,4 @@ export type Database = {
     CompositeTypes: Record<string, never>;
   };
 };
+

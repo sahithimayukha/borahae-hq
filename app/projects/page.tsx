@@ -8,6 +8,9 @@ import { ProjectForm } from "@/components/projects/project-form";
 import { createClient } from "@/lib/supabase/server";
 import type { FanProject } from "@/types/database";
 
+const PUBLIC_PROJECTS_PER_PAGE = 8;
+const SUBMITTED_PROJECTS_PER_PAGE = 4;
+
 const projectCategories = [
   "All",
   "Charity",
@@ -16,27 +19,55 @@ const projectCategories = [
   "Watch Party",
   "Online Event",
   "Meetup",
+  "Past",
 ];
+
+type FanProjectWithReadOnly = FanProject & {
+  is_read_only?: boolean;
+};
 
 type ProjectsPageProps = {
   searchParams?: Promise<{
     category?: string;
     q?: string;
+    page?: string;
+    myPage?: string;
   }>;
 };
 
 type FanProjectCardProps = {
-  project: FanProject;
+  project: FanProjectWithReadOnly;
 };
 
 type ProjectToolsProps = {
   selectedCategory: string;
   searchQuery: string;
+  submittedPage: number;
 };
 
 type MySubmittedProjectsProps = {
-  projects: FanProject[];
+  projects: FanProjectWithReadOnly[];
   userId: string;
+  currentPage: number;
+  totalPages: number;
+  selectedCategory: string;
+  searchQuery: string;
+  publicPage: number;
+};
+
+type ProjectHrefOptions = {
+  category: string;
+  searchQuery: string;
+  page?: number;
+  myPage?: number;
+};
+
+type PublicPaginationProps = {
+  currentPage: number;
+  totalPages: number;
+  selectedCategory: string;
+  searchQuery: string;
+  submittedPage: number;
 };
 
 function formatProjectDate(date: string | null) {
@@ -59,7 +90,12 @@ function formatSubmittedDate(date: string) {
   }).format(new Date(date));
 }
 
-function getCategoryHref(category: string, searchQuery: string) {
+function getProjectsHref({
+  category,
+  searchQuery,
+  page = 1,
+  myPage = 1,
+}: ProjectHrefOptions) {
   const params = new URLSearchParams();
 
   if (category !== "All") {
@@ -68,6 +104,14 @@ function getCategoryHref(category: string, searchQuery: string) {
 
   if (searchQuery) {
     params.set("q", searchQuery);
+  }
+
+  if (page > 1) {
+    params.set("page", page.toString());
+  }
+
+  if (myPage > 1) {
+    params.set("myPage", myPage.toString());
   }
 
   const queryString = params.toString();
@@ -109,45 +153,47 @@ function FanProjectCard({ project }: FanProjectCardProps) {
     .join(", ");
 
   return (
-    <article className="rounded-4xl border border-[#2A2A2A] bg-white p-6 text-[#111111] shadow-[0_20px_70px_rgba(0,0,0,0.35)]">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-        <div>
+    <article className="min-w-0 overflow-hidden rounded-3xl border border-[#2A2A2A] bg-white p-4 text-[#111111] shadow-[0_20px_70px_rgba(0,0,0,0.35)] sm:rounded-4xl sm:p-6">
+      <div className="flex min-w-0 flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+        <div className="min-w-0">
           <p className="font-era-label text-[10px] text-[#E11D48]">
             {formatProjectDate(project.project_date)}
           </p>
 
-          <h2 className="font-era mt-3 text-2xl leading-[1.1] text-[#111111]">
+          <h2 className="font-era mt-3 wrap-break-word text-2xl leading-[1.1] text-[#111111]">
             {project.title}
           </h2>
 
           {project.organizer_name ? (
-            <p className="mt-2 text-sm font-semibold text-[#4B4B4B]">
+            <p className="mt-2 wrap-break-word text-sm font-semibold text-[#4B4B4B]">
               Organized by {project.organizer_name}
             </p>
           ) : null}
         </div>
 
-        <span className="font-era-label inline-flex w-fit rounded-full bg-[#111111] px-4 py-2 text-[10px] text-white!">
+        <span className="font-era-label inline-flex w-fit shrink-0 rounded-full bg-[#111111] px-4 py-2 text-[10px] text-white!">
           {project.category}
         </span>
       </div>
 
       {project.description ? (
-        <p className="mt-5 text-sm leading-6 text-[#4B4B4B]">
+        <p className="mt-5 wrap-break-word text-sm leading-6 text-[#4B4B4B]">
           {project.description}
         </p>
       ) : null}
 
-      <div className="mt-6 flex flex-wrap gap-3 text-sm font-bold text-[#111111]">
+      <div className="mt-6 flex min-w-0 flex-wrap gap-3 text-sm font-bold text-[#111111]">
         {locationText ? (
-          <span className="rounded-full bg-[#F7F7F7] px-4 py-2">
+          <span className="max-w-full wrap-break-word rounded-full bg-[#F7F7F7] px-4 py-2">
             {locationText}
           </span>
         ) : null}
 
-        <span className="rounded-full bg-[#F7F7F7] px-4 py-2">
-          {project.status}
-        </span>
+        {project.is_read_only ? (
+          <span className="rounded-full bg-[#FFF1F3] px-4 py-2 text-[#B91C3B]">
+            Official Activity
+          </span>
+        ) : null}
       </div>
 
       {project.project_link ? (
@@ -167,19 +213,24 @@ function FanProjectCard({ project }: FanProjectCardProps) {
 function MySubmittedProjects({
   projects,
   userId,
+  currentPage,
+  totalPages,
+  selectedCategory,
+  searchQuery,
+  publicPage,
 }: MySubmittedProjectsProps) {
   return (
-    <section className="relative overflow-hidden rounded-4xl border border-[#2A2A2A] bg-[#0B0B0B] p-6 shadow-[0_20px_70px_rgba(0,0,0,0.42)] sm:p-8">
+    <section className="relative min-w-0 overflow-hidden rounded-3xl border border-[#2A2A2A] bg-[#0B0B0B] p-4 shadow-[0_20px_70px_rgba(0,0,0,0.42)] sm:rounded-4xl sm:p-8">
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(225,29,72,0.24),transparent_34%),radial-gradient(circle_at_bottom_left,rgba(225,29,72,0.10),transparent_28%)]" />
 
-      <div className="absolute inset-0 opacity-[0.08] bg-[linear-gradient(135deg,#fff_1px,transparent_1px)] bg-size-[18px_18px]" />
+      <div className="absolute inset-0 bg-[linear-gradient(135deg,#fff_1px,transparent_1px)] bg-size-[18px_18px] opacity-[0.08]" />
 
-      <div className="relative z-10">
+      <div className="relative z-10 min-w-0">
         <p className="font-era-label text-[10px] text-[#E11D48]">
           Personal Submissions
         </p>
 
-        <h2 className="font-era-display mt-4 max-w-4xl text-5xl text-white! sm:text-6xl">
+        <h2 className="font-era-display mt-4 max-w-4xl text-4xl text-white! sm:text-6xl">
           My Submitted
           <span className="mt-3 block w-fit bg-[#E11D48] px-4 py-2 text-white!">
             Projects.
@@ -187,107 +238,148 @@ function MySubmittedProjects({
         </h2>
 
         <p className="mt-5 max-w-2xl border-l-4 border-[#E11D48] pl-4 text-sm font-semibold leading-7 text-white/75">
-          Track the review status of the projects you submitted. Pending and
-          rejected projects remain visible only inside your personal account.
+          Track the review status of projects you personally submitted. Official
+          BorahaeHQ activities stay inside the public project feed.
         </p>
 
         {projects.length > 0 ? (
-          <div className="mt-8 grid gap-5 lg:grid-cols-2">
-            {projects.map((project) => {
-              const locationText = [project.city, project.country]
-                .filter(Boolean)
-                .join(", ");
+          <>
+            <div className="mt-8 grid min-w-0 gap-5 lg:grid-cols-2">
+              {projects.map((project) => {
+                const locationText = [project.city, project.country]
+                  .filter(Boolean)
+                  .join(", ");
 
-              return (
-                <article
-                  key={project.id}
-                  className="rounded-4xl border border-white/15 bg-white p-5 text-[#111111] shadow-[0_18px_50px_rgba(0,0,0,0.25)]"
-                >
-                  <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-                    <div>
-                      <p className="font-era-label text-[10px] text-[#E11D48]">
-                        Submitted {formatSubmittedDate(project.created_at)}
-                      </p>
+                return (
+                  <article
+                    key={project.id}
+                    className="min-w-0 overflow-hidden rounded-3xl border border-white/15 bg-white p-4 text-[#111111] shadow-[0_18px_50px_rgba(0,0,0,0.25)] sm:rounded-4xl sm:p-5"
+                  >
+                    <div className="flex min-w-0 flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                      <div className="min-w-0">
+                        <p className="font-era-label text-[10px] text-[#E11D48]">
+                          Submitted {formatSubmittedDate(project.created_at)}
+                        </p>
 
-                      <h3 className="font-era mt-3 text-2xl leading-[1.1] text-[#111111]">
-                        {project.title}
-                      </h3>
+                        <h3 className="font-era mt-3 wrap-break-word text-2xl leading-[1.1] text-[#111111]">
+                          {project.title}
+                        </h3>
 
-                      <p className="mt-2 text-sm font-semibold text-[#4B4B4B]">
-                        {project.category}
-                      </p>
+                        <p className="mt-2 text-sm font-semibold text-[#4B4B4B]">
+                          {project.category}
+                        </p>
+                      </div>
+
+                      <span
+                        className={`font-era-label inline-flex w-fit shrink-0 rounded-full border px-4 py-2 text-[10px] ${getStatusStyles(
+                          project.status,
+                        )}`}
+                      >
+                        {project.status}
+                      </span>
                     </div>
 
-                    <span
-                      className={`font-era-label inline-flex w-fit rounded-full border px-4 py-2 text-[10px] ${getStatusStyles(
-                        project.status,
-                      )}`}
-                    >
-                      {project.status}
-                    </span>
-                  </div>
+                    {project.description ? (
+                      <p className="mt-5 wrap-break-word text-sm leading-6 text-[#4B4B4B]">
+                        {project.description}
+                      </p>
+                    ) : null}
 
-                  {project.description ? (
-                    <p className="mt-5 text-sm leading-6 text-[#4B4B4B]">
-                      {project.description}
+                    <p className="mt-5 rounded-2xl bg-[#F7F7F7] p-4 text-xs font-semibold leading-5 text-[#4B4B4B]">
+                      {getStatusMessage(project.status)}
                     </p>
+
+                    <div className="mt-5 flex min-w-0 flex-wrap gap-3 text-xs font-bold text-[#111111]">
+                      {locationText ? (
+                        <span className="max-w-full wrap-break-word rounded-full bg-[#F7F7F7] px-4 py-2">
+                          {locationText}
+                        </span>
+                      ) : null}
+
+                      <span className="rounded-full bg-[#F7F7F7] px-4 py-2">
+                        {formatProjectDate(project.project_date)}
+                      </span>
+                    </div>
+
+                    <div className="mt-5 flex flex-wrap items-center gap-3">
+                      {project.status.toLowerCase() === "pending" ? (
+                        <>
+                          <EditProjectForm project={project} userId={userId} />
+
+                          <DeleteProjectButton
+                            projectId={project.id}
+                            userId={userId}
+                          />
+                        </>
+                      ) : null}
+
+                      {project.project_link ? (
+                        <a
+                          href={project.project_link}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="inline-flex items-center justify-center rounded-full bg-[#111111] px-3 py-2 text-[8px] font-black uppercase leading-none tracking-[0.14em] text-white! transition hover:bg-[#E11D48]"
+                        >
+                          Open Link
+                        </a>
+                      ) : null}
+                    </div>
+                  </article>
+                );
+              })}
+            </div>
+
+            {totalPages > 1 ? (
+              <nav
+                aria-label="My submitted projects pagination"
+                className="mt-6 flex flex-col gap-3 rounded-2xl border border-white/10 bg-black/30 p-4 sm:flex-row sm:items-center sm:justify-between"
+              >
+                <p className="font-era-label text-center text-[10px] text-white/70 sm:text-left">
+                  Personal submissions page {currentPage} of {totalPages}
+                </p>
+
+                <div className="flex items-center justify-center gap-3 sm:justify-end">
+                  {currentPage > 1 ? (
+                    <Link
+                      href={getProjectsHref({
+                        category: selectedCategory,
+                        searchQuery,
+                        page: publicPage,
+                        myPage: currentPage - 1,
+                      })}
+                      className="font-era-label inline-flex rounded-full border border-white/20 bg-[#1A1A1A] px-5 py-3 text-[10px] text-white! transition hover:bg-[#262626]"
+                    >
+                      ← Previous
+                    </Link>
                   ) : null}
 
-                  <p className="mt-5 rounded-2xl bg-[#F7F7F7] p-4 text-xs font-semibold leading-5 text-[#4B4B4B]">
-                    {getStatusMessage(project.status)}
-                  </p>
-
-                  <div className="mt-5 flex flex-wrap gap-3 text-xs font-bold text-[#111111]">
-                    {locationText ? (
-                      <span className="rounded-full bg-[#F7F7F7] px-4 py-2">
-                        {locationText}
-                      </span>
-                    ) : null}
-
-                    <span className="rounded-full bg-[#F7F7F7] px-4 py-2">
-                      {formatProjectDate(project.project_date)}
-                    </span>
-                  </div>
-
-                  <div className="mt-5 flex flex-wrap items-center gap-3">
-                    {project.status.toLowerCase() === "pending" ? (
-                      <>
-                        <EditProjectForm
-                          project={project}
-                          userId={userId}
-                        />
-
-                        <DeleteProjectButton
-                          projectId={project.id}
-                          userId={userId}
-                        />
-                      </>
-                    ) : null}
-
-                    {project.project_link ? (
-                      <a
-                        href={project.project_link}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="inline-flex items-center justify-center rounded-full bg-[#111111] px-3 py-2 text-[8px] font-black uppercase leading-none tracking-[0.14em] text-white! transition hover:bg-[#E11D48]"
-                      >
-                        Open Link
-                      </a>
-                    ) : null}
-                  </div>
-                </article>
-              );
-            })}
-          </div>
+                  {currentPage < totalPages ? (
+                    <Link
+                      href={getProjectsHref({
+                        category: selectedCategory,
+                        searchQuery,
+                        page: publicPage,
+                        myPage: currentPage + 1,
+                      })}
+                      className="font-era-label inline-flex rounded-full bg-[#E11D48] px-5 py-3 text-[10px] text-white! transition hover:bg-[#C5163D]"
+                    >
+                      Next →
+                    </Link>
+                  ) : null}
+                </div>
+              </nav>
+            ) : null}
+          </>
         ) : (
           <div className="mt-8 rounded-4xl border border-white/15 bg-black/35 p-6">
             <p className="font-era text-2xl leading-[1.1] text-white!">
-              No Submissions Yet
+              No Personal Submissions Yet
             </p>
 
             <p className="mt-3 max-w-xl text-sm leading-6 text-white/65">
-              Submit your first fan project using the form above. It will appear
-              here with a pending status while it waits for review.
+              Submit your first fan project using the form above. Official
+              activities imported by BorahaeHQ do not appear in this personal
+              section.
             </p>
           </div>
         )}
@@ -299,12 +391,13 @@ function MySubmittedProjects({
 function ProjectTools({
   selectedCategory,
   searchQuery,
+  submittedPage,
 }: ProjectToolsProps) {
   return (
-    <section className="rounded-4xl border border-[#2A2A2A] bg-[#0B0B0B] p-5 shadow-[0_20px_70px_rgba(0,0,0,0.35)]">
-      <div className="flex flex-col gap-6">
-        <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-          <div>
+    <section className="min-w-0 overflow-hidden rounded-3xl border border-[#2A2A2A] bg-[#0B0B0B] p-4 shadow-[0_20px_70px_rgba(0,0,0,0.35)] sm:rounded-4xl sm:p-5">
+      <div className="flex min-w-0 flex-col gap-6">
+        <div className="flex min-w-0 flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+          <div className="min-w-0">
             <p className="font-era-label text-[10px] text-[#E11D48]">
               Search Projects
             </p>
@@ -314,22 +407,22 @@ function ProjectTools({
             </h2>
 
             <p className="mt-3 max-w-xl text-sm leading-6 text-white/65">
-              Search approved fan-project titles using words such as charity,
-              birthday, café, streaming, meetup, or watch party.
+              Search approved fan activities using words such as charity,
+              birthday, café, meetup, pop-up, light show, or watch party.
             </p>
           </div>
 
           <form
             action="/projects"
             method="get"
-            className="flex w-full flex-col gap-3 sm:flex-row lg:max-w-xl"
+            className="flex min-w-0 w-full flex-col gap-3 sm:flex-row lg:max-w-xl"
           >
             {selectedCategory !== "All" ? (
-              <input
-                type="hidden"
-                name="category"
-                value={selectedCategory}
-              />
+              <input type="hidden" name="category" value={selectedCategory} />
+            ) : null}
+
+            {submittedPage > 1 ? (
+              <input type="hidden" name="myPage" value={submittedPage} />
             ) : null}
 
             <label htmlFor="project-search" className="sr-only">
@@ -348,15 +441,19 @@ function ProjectTools({
 
             <button
               type="submit"
-              className="font-era-label inline-flex items-center justify-center rounded-full bg-[#E11D48] px-6 py-3.5 text-[10px] text-white! transition hover:-translate-y-0.5 hover:bg-[#C5163D]"
+              className="font-era-label inline-flex shrink-0 items-center justify-center rounded-full bg-[#E11D48] px-6 py-3.5 text-[10px] text-white! transition hover:-translate-y-0.5 hover:bg-[#C5163D]"
             >
               Search
             </button>
 
             {searchQuery ? (
               <Link
-                href={getCategoryHref(selectedCategory, "")}
-                className="font-era-label inline-flex items-center justify-center rounded-full border border-white/30 bg-[#151515] px-6 py-3.5 text-[10px] text-white! transition hover:bg-[#222222]"
+                href={getProjectsHref({
+                  category: selectedCategory,
+                  searchQuery: "",
+                  myPage: submittedPage,
+                })}
+                className="font-era-label inline-flex shrink-0 items-center justify-center rounded-full border border-white/30 bg-[#151515] px-6 py-3.5 text-[10px] text-white! transition hover:bg-[#222222]"
               >
                 Clear
               </Link>
@@ -369,15 +466,19 @@ function ProjectTools({
             Filter By Category
           </p>
 
-          <div className="mt-4 flex gap-3 overflow-x-auto pb-1">
+          <div className="mt-4 flex flex-wrap gap-3">
             {projectCategories.map((category) => {
               const isActive = selectedCategory === category;
 
               return (
                 <Link
                   key={category}
-                  href={getCategoryHref(category, searchQuery)}
-                  className={`font-era-label shrink-0 rounded-full px-4 py-2 text-[10px] transition ${
+                  href={getProjectsHref({
+                    category,
+                    searchQuery,
+                    myPage: submittedPage,
+                  })}
+                  className={`font-era-label rounded-full px-4 py-2 text-[10px] transition ${
                     isActive
                       ? "bg-[#E11D48] text-white!"
                       : "bg-[#151515] text-white! hover:bg-[#222222]"
@@ -394,20 +495,91 @@ function ProjectTools({
   );
 }
 
+function PublicPagination({
+  currentPage,
+  totalPages,
+  selectedCategory,
+  searchQuery,
+  submittedPage,
+}: PublicPaginationProps) {
+  if (totalPages <= 1) {
+    return null;
+  }
+
+  return (
+    <nav
+      aria-label="Approved projects pagination"
+      className="flex flex-col gap-3 rounded-3xl border border-white/10 bg-[#111111] p-4 sm:flex-row sm:items-center sm:justify-between"
+    >
+      <p className="font-era-label text-center text-[10px] text-white/70 sm:text-left">
+        Community feed page {currentPage} of {totalPages}
+      </p>
+
+      <div className="flex items-center justify-center gap-3 sm:justify-end">
+        {currentPage > 1 ? (
+          <Link
+            href={getProjectsHref({
+              category: selectedCategory,
+              searchQuery,
+              page: currentPage - 1,
+              myPage: submittedPage,
+            })}
+            className="font-era-label inline-flex rounded-full border border-white/20 bg-[#1A1A1A] px-5 py-3 text-[10px] text-white! transition hover:bg-[#262626]"
+          >
+            ← Previous
+          </Link>
+        ) : null}
+
+        {currentPage < totalPages ? (
+          <Link
+            href={getProjectsHref({
+              category: selectedCategory,
+              searchQuery,
+              page: currentPage + 1,
+              myPage: submittedPage,
+            })}
+            className="font-era-label inline-flex rounded-full bg-[#E11D48] px-5 py-3 text-[10px] text-white! transition hover:bg-[#C5163D]"
+          >
+            Next →
+          </Link>
+        ) : null}
+      </div>
+    </nav>
+  );
+}
+
 export default async function ProjectsPage({
   searchParams,
 }: ProjectsPageProps) {
   const resolvedSearchParams = await searchParams;
 
-  const searchQuery = (resolvedSearchParams?.q ?? "")
-    .trim()
-    .slice(0, 80);
+  const searchQuery = (resolvedSearchParams?.q ?? "").trim().slice(0, 80);
 
   const requestedCategory = resolvedSearchParams?.category ?? "All";
 
   const selectedCategory = projectCategories.includes(requestedCategory)
     ? requestedCategory
     : "All";
+
+  const requestedPublicPage = Number.parseInt(
+    resolvedSearchParams?.page ?? "1",
+    10,
+  );
+
+  const requestedSubmittedPage = Number.parseInt(
+    resolvedSearchParams?.myPage ?? "1",
+    10,
+  );
+
+  const currentPublicPage =
+    Number.isFinite(requestedPublicPage) && requestedPublicPage > 0
+      ? requestedPublicPage
+      : 1;
+
+  const currentSubmittedPage =
+    Number.isFinite(requestedSubmittedPage) && requestedSubmittedPage > 0
+      ? requestedSubmittedPage
+      : 1;
 
   const supabase = await createClient();
 
@@ -419,17 +591,27 @@ export default async function ProjectsPage({
     redirect("/login");
   }
 
+  const publicRangeStart = (currentPublicPage - 1) * PUBLIC_PROJECTS_PER_PAGE;
+
+  const publicRangeEnd = publicRangeStart + PUBLIC_PROJECTS_PER_PAGE - 1;
+
+  const submittedRangeStart =
+    (currentSubmittedPage - 1) * SUBMITTED_PROJECTS_PER_PAGE;
+
+  const submittedRangeEnd =
+    submittedRangeStart + SUBMITTED_PROJECTS_PER_PAGE - 1;
+
   let publicProjectsQuery = supabase
     .from("fan_projects")
-    .select("*")
-    .eq("status", "approved")
-    .order("project_date", { ascending: true });
+    .select("*", {
+      count: "exact",
+    })
+    .eq("status", "approved");
 
-  if (selectedCategory !== "All") {
-    publicProjectsQuery = publicProjectsQuery.eq(
-      "category",
-      selectedCategory,
-    );
+  if (selectedCategory === "All") {
+    publicProjectsQuery = publicProjectsQuery.neq("category", "Past");
+  } else {
+    publicProjectsQuery = publicProjectsQuery.eq("category", selectedCategory);
   }
 
   if (searchQuery) {
@@ -439,30 +621,87 @@ export default async function ProjectsPage({
     );
   }
 
+  publicProjectsQuery = publicProjectsQuery
+    .order("project_date", {
+      ascending: true,
+    })
+    .range(publicRangeStart, publicRangeEnd);
+
+  const submittedProjectsQuery = supabase
+    .from("fan_projects")
+    .select("*", {
+      count: "exact",
+    })
+    .eq("created_by", user.id)
+    .eq("is_read_only", false)
+    .order("created_at", {
+      ascending: false,
+    })
+    .range(submittedRangeStart, submittedRangeEnd);
+
   const [
-    { data: publicProjectsData, error: publicProjectsError },
-    { data: submittedProjectsData, error: submittedProjectsError },
-  ] = await Promise.all([
-    publicProjectsQuery,
+    {
+      data: publicProjectsData,
+      error: publicProjectsError,
+      count: publicProjectsCount,
+    },
+    {
+      data: submittedProjectsData,
+      error: submittedProjectsError,
+      count: submittedProjectsCount,
+    },
+  ] = await Promise.all([publicProjectsQuery, submittedProjectsQuery]);
 
-    supabase
-      .from("fan_projects")
-      .select("*")
-      .eq("created_by", user.id)
-      .order("created_at", { ascending: false }),
-  ]);
+  const publicProjects = (publicProjectsData ?? []) as FanProjectWithReadOnly[];
 
-  const publicProjects = (publicProjectsData ?? []) as FanProject[];
+  const submittedProjects = (submittedProjectsData ??
+    []) as FanProjectWithReadOnly[];
 
-  const submittedProjects =
-    (submittedProjectsData ?? []) as FanProject[];
+  const totalPublicProjects = publicProjectsCount ?? 0;
+
+  const totalSubmittedProjects = submittedProjectsCount ?? 0;
+
+  const totalPublicPages = Math.max(
+    1,
+    Math.ceil(totalPublicProjects / PUBLIC_PROJECTS_PER_PAGE),
+  );
+
+  const totalSubmittedPages = Math.max(
+    1,
+    Math.ceil(totalSubmittedProjects / SUBMITTED_PROJECTS_PER_PAGE),
+  );
+
+  if (currentPublicPage > totalPublicPages && totalPublicProjects > 0) {
+    redirect(
+      getProjectsHref({
+        category: selectedCategory,
+        searchQuery,
+        page: totalPublicPages,
+        myPage: currentSubmittedPage,
+      }),
+    );
+  }
+
+  if (
+    currentSubmittedPage > totalSubmittedPages &&
+    totalSubmittedProjects > 0
+  ) {
+    redirect(
+      getProjectsHref({
+        category: selectedCategory,
+        searchQuery,
+        page: currentPublicPage,
+        myPage: totalSubmittedPages,
+      }),
+    );
+  }
 
   return (
     <AppShell activePath="/projects">
       <PageHero
         eyebrow="Fan Projects"
         title="Discover ARMY Projects"
-        description="Explore approved charity drives, birthday cafés, watch parties, streaming projects, meetups, and community-led ARMY moments."
+        description="Explore approved charity drives, birthday cafés, watch parties, pop-ups, exhibitions, light shows, and community-led ARMY moments."
       />
 
       <ProjectForm userId={user.id} />
@@ -481,12 +720,18 @@ export default async function ProjectsPage({
         <MySubmittedProjects
           projects={submittedProjects}
           userId={user.id}
+          currentPage={currentSubmittedPage}
+          totalPages={totalSubmittedPages}
+          selectedCategory={selectedCategory}
+          searchQuery={searchQuery}
+          publicPage={currentPublicPage}
         />
       )}
 
       <ProjectTools
         selectedCategory={selectedCategory}
         searchQuery={searchQuery}
+        submittedPage={currentSubmittedPage}
       />
 
       {publicProjectsError ? (
@@ -502,39 +747,40 @@ export default async function ProjectsPage({
       ) : null}
 
       {!publicProjectsError && publicProjects.length > 0 ? (
-        <div className="space-y-5">
+        <div className="min-w-0 space-y-5">
           <div>
             <h2 className="font-era text-3xl leading-[1.05] text-white!">
-              {searchQuery
-                ? "Search Results"
-                : "Approved Community Projects"}
+              {searchQuery ? "Search Results" : "Approved Community Projects"}
             </h2>
 
             <p className="mt-2 text-sm text-white/70">
               {searchQuery
-                ? `${publicProjects.length} approved project result${
-                    publicProjects.length === 1 ? "" : "s"
+                ? `${totalPublicProjects} approved project result${
+                    totalPublicProjects === 1 ? "" : "s"
                   } found for “${searchQuery}”${
                     selectedCategory !== "All"
                       ? ` inside ${selectedCategory}.`
                       : "."
                   }`
                 : `Showing ${
-                    selectedCategory === "All"
-                      ? "all"
-                      : selectedCategory
+                    selectedCategory === "All" ? "all" : selectedCategory
                   } approved community projects.`}
             </p>
           </div>
 
-          <div className="grid gap-5 lg:grid-cols-2">
+          <div className="grid min-w-0 gap-5 lg:grid-cols-2">
             {publicProjects.map((project) => (
-              <FanProjectCard
-                key={project.id}
-                project={project}
-              />
+              <FanProjectCard key={project.id} project={project} />
             ))}
           </div>
+
+          <PublicPagination
+            currentPage={currentPublicPage}
+            totalPages={totalPublicPages}
+            selectedCategory={selectedCategory}
+            searchQuery={searchQuery}
+            submittedPage={currentSubmittedPage}
+          />
         </div>
       ) : null}
 
@@ -546,7 +792,7 @@ export default async function ProjectsPage({
 
           <p className="mx-auto mt-3 max-w-md text-sm leading-6 text-[#4B4B4B]">
             {searchQuery
-              ? `We could not find an approved fan project titled “${searchQuery}”. Try another word, select a different category, or clear the search.`
+              ? `We could not find an approved fan project titled “${searchQuery}”. Try another word, choose another category, or clear the search.`
               : "There are no approved projects in this category yet. Try another category or submit a new fan project for review."}
           </p>
 
@@ -563,3 +809,4 @@ export default async function ProjectsPage({
     </AppShell>
   );
 }
+
