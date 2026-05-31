@@ -69,7 +69,7 @@ export default function HomePage() {
               </span>
 
               <span className="font-era-label hidden bg-[#E11D48] px-3 py-1 text-[9px] text-white! sm:inline-flex">
-                ARIRANG Era Hub
+                ARMY Hub
               </span>
             </Link>
 
@@ -129,7 +129,7 @@ export default function HomePage() {
           <div className="relative z-10 grid min-h-165ms-end gap-8 p-6 sm:p-9 lg:grid-cols-[1fr_0.78fr] lg:p-12">
             <div className="max-w-3xl">
               <p className="font-era-label inline-flex bg-[#E11D48] px-4 py-2 text-[10px] text-white!">
-                ARIRANG Era Hub
+                ARMY Hub
               </p>
 
               <h1 className="font-era-display mt-6 text-6xl text-white! sm:text-7xl lg:text-8xl">
