@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import { PasswordInput } from "@/components/auth/password-input";
 
 export function LoginForm() {
   const router = useRouter();
@@ -81,15 +82,13 @@ export function LoginForm() {
           Password
         </label>
 
-        <input
+        <PasswordInput
           id="password"
           name="password"
-          type="password"
           value={password}
           onChange={(event) => setPassword(event.target.value)}
           placeholder="Enter your password"
           autoComplete="current-password"
-          className="w-full rounded-2xl border border-[#2A2A2A] bg-white px-4 py-3.5 text-sm text-[#111111] outline-none transition placeholder:text-[#777777] focus:border-[#E11D48] focus:ring-4 focus:ring-[#E11D48]/20"
         />
 
         <div className="mt-3 flex justify-end">
@@ -120,10 +119,10 @@ export function LoginForm() {
         type="submit"
         disabled={isLoading}
         style={{
-        fontSize: "12px",
-        lineHeight: "1",
-        fontWeight: 900,
-      }}
+          fontSize: "12px",
+          lineHeight: "1",
+          fontWeight: 900,
+        }}
         className="inline-flex w-full items-center justify-center rounded-full bg-[#E11D48] px-6 py-3.5 text-sm font-black uppercase tracking-widest text-white! shadow-[0_16px_40px_rgba(225,29,72,0.26)] transition hover:-translate-y-0.5 hover:bg-[#C5163D] disabled:cursor-not-allowed disabled:opacity-60"
       >
         {isLoading ? "Signing In..." : "Sign In"}

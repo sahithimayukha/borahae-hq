@@ -388,6 +388,61 @@ export type OfficialContentSnapshotUpdate = {
 };
 
 /* =========================================================
+   USER REMINDERS
+   ========================================================= */
+
+export type UserReminder = {
+  id: string;
+  user_id: string;
+  target_type: "event" | "fan_project";
+  event_id: string | null;
+  fan_project_id: string | null;
+  reminder_option:
+    | "same_day"
+    | "1_day_before"
+    | "3_days_before"
+    | "7_days_before";
+  remind_on: string;
+  is_enabled: boolean;
+  created_at: string;
+  updated_at: string;
+};
+
+export type UserReminderInsert = {
+  id?: string;
+  user_id: string;
+  target_type: "event" | "fan_project";
+  event_id?: string | null;
+  fan_project_id?: string | null;
+  reminder_option:
+    | "same_day"
+    | "1_day_before"
+    | "3_days_before"
+    | "7_days_before";
+  remind_on?: string;
+  is_enabled?: boolean;
+  created_at?: string;
+  updated_at?: string;
+};
+
+export type UserReminderUpdate = {
+  id?: string;
+  user_id?: string;
+  target_type?: "event" | "fan_project";
+  event_id?: string | null;
+  fan_project_id?: string | null;
+  reminder_option?:
+    | "same_day"
+    | "1_day_before"
+    | "3_days_before"
+    | "7_days_before";
+  remind_on?: string;
+  is_enabled?: boolean;
+  created_at?: string;
+  updated_at?: string;
+};
+
+/* =========================================================
    SUPABASE DATABASE TYPE
    ========================================================= */
 

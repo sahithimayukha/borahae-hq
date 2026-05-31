@@ -1,28 +1,27 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 
 export function ForgotPasswordForm() {
-  const [email, setEmail] = useState("");
+  const router = useRouter();
 
-  const [message, setMessage] = useState("");
+  const [email, setEmail] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
   const [isSending, setIsSending] = useState(false);
 
-  async function handleSubmit(
-    event: React.FormEvent<HTMLFormElement>,
-  ) {
+  async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
-    setMessage("");
     setErrorMessage("");
 
-    const trimmedEmail = email.trim();
+    const trimmedEmail = email.trim().toLowerCase();
 
     if (!trimmedEmail) {
       setErrorMessage("Please enter your email address.");
+
       return;
     }
 
@@ -30,26 +29,21 @@ export function ForgotPasswordForm() {
 
     const supabase = createClient();
 
-    const { error } = await supabase.auth.resetPasswordForEmail(
-      trimmedEmail,
-      {
-        redirectTo: `${window.location.origin}/reset-password`,
-      },
-    );
+    const { error } = await supabase.auth.resetPasswordForEmail(trimmedEmail);
 
     if (error) {
-      setErrorMessage(error.message);
+      setErrorMessage(
+        error.message.includes("rate limit")
+          ? "Too many reset requests were sent recently. Please wait before requesting another code."
+          : error.message,
+      );
+
       setIsSending(false);
+
       return;
     }
 
-    setEmail("");
-
-    setMessage(
-      "Check your inbox. If an account exists for that email, a password-reset link has been sent.",
-    );
-
-    setIsSending(false);
+    router.push(`/reset-password?email=${encodeURIComponent(trimmedEmail)}`);
   }
 
   return (
@@ -71,7 +65,7 @@ export function ForgotPasswordForm() {
 
       <p className="mt-4 text-sm leading-6 text-[#4B4B4B]">
         Enter the email connected to your BorahaeHQ account. We will send a
-        secure recovery link to your inbox.
+        secure 6-digit recovery code.
       </p>
 
       <form onSubmit={handleSubmit} className="mt-7 space-y-5">
@@ -97,14 +91,8 @@ export function ForgotPasswordForm() {
         </div>
 
         {errorMessage ? (
-          <div className="rounded-2xl border border-[#E11D48] bg-[#FFF1F3] px-4 py-3 text-sm font-bold text-[#B91C3B]">
+          <div className="rounded-2xl border border-[#E11D48] bg-[#FFF1F3] px-4 py-3 text-sm font-bold leading-6 text-[#B91C3B]">
             {errorMessage}
-          </div>
-        ) : null}
-
-        {message ? (
-          <div className="rounded-2xl border border-[#166534] bg-[#F0FDF4] px-4 py-3 text-sm font-bold leading-6 text-[#166534]">
-            {message}
           </div>
         ) : null}
 
@@ -112,13 +100,13 @@ export function ForgotPasswordForm() {
           type="submit"
           disabled={isSending}
           style={{
-        fontSize: "12px",
-        lineHeight: "1",
-        fontWeight: 900,
-      }}
+            fontSize: "12px",
+            lineHeight: "1",
+            fontWeight: 900,
+          }}
           className="inline-flex w-full items-center justify-center rounded-full bg-[#E11D48] px-6 py-3.5 text-[10px] font-black uppercase tracking-[0.14em] text-white! transition hover:-translate-y-0.5 hover:bg-[#C5163D] disabled:cursor-not-allowed disabled:opacity-60"
         >
-          {isSending ? "Sending Link..." : "Send Reset Link"}
+          {isSending ? "Sending Code..." : "Send Recovery Code"}
         </button>
       </form>
     </section>
