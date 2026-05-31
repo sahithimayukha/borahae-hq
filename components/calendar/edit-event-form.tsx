@@ -183,6 +183,12 @@ export function EditEventForm({ event, userId }: EditEventFormProps) {
 
         <button
           type="button"
+          style={{
+            fontSize: "10px",
+            lineHeight: "1",
+            fontWeight: 900,
+            letterSpacing: "0.12em",
+          }}
           onClick={handleCancel}
           className="font-era-label inline-flex w-fit rounded-full border border-[#2A2A2A] bg-white px-4 py-2 text-[9px] text-[#111111] transition hover:bg-[#EFEFEF]"
         >
@@ -342,6 +348,12 @@ export function EditEventForm({ event, userId }: EditEventFormProps) {
       <button
         type="submit"
         disabled={isSaving}
+        style={{
+          fontSize: "10px",
+          lineHeight: "1",
+          fontWeight: 900,
+          letterSpacing: "0.12em",
+        }}
         className="font-era-label mt-5 inline-flex rounded-full bg-[#E11D48] px-5 py-3 text-[10px] text-white! transition hover:-translate-y-0.5 hover:bg-[#C5163D] disabled:cursor-not-allowed disabled:opacity-60"
       >
         {isSaving ? "Saving..." : "Save Changes"}

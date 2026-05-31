@@ -5,7 +5,12 @@ import { NextEventCountdown } from "@/components/calendar/next-event-countdown";
 import { ArirangEraSection } from "@/components/era/arirang-era-section";
 import { DailyMemoryPrompt } from "@/components/vault/daily-memory-prompt";
 import { createClient } from "@/lib/supabase/server";
-import type { CalendarEvent, FanProject, Profile } from "@/types/database";
+import type {
+  CalendarEvent,
+  FanProject,
+  Profile,
+  UserReminder,
+} from "@/types/database";
 
 type ProfileSummaryProps = {
   profile: Profile | null;
@@ -26,6 +31,16 @@ type QuickActionProps = {
   label: string;
   description: string;
   href: string;
+};
+
+type DashboardReminderRecord = {
+  reminder: UserReminder;
+  title: string;
+  targetLabel: string;
+};
+
+type UpcomingRemindersCardProps = {
+  reminders: DashboardReminderRecord[];
 };
 
 const cardClass =
@@ -54,6 +69,28 @@ const quickActions: QuickActionProps[] = [
   },
 ];
 
+function getTodayInIndia() {
+  return new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Asia/Kolkata",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(new Date());
+}
+
+function getTomorrowInIndia() {
+  const tomorrow = new Date();
+
+  tomorrow.setDate(tomorrow.getDate() + 1);
+
+  return new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Asia/Kolkata",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(tomorrow);
+}
+
 function formatShortDate(date: string | null) {
   if (!date) {
     return "TBA";
@@ -63,6 +100,45 @@ function formatShortDate(date: string | null) {
     month: "short",
     day: "numeric",
   }).format(new Date(`${date}T00:00:00`));
+}
+
+function formatReminderDate(date: string) {
+  const today = getTodayInIndia();
+
+  const tomorrow = getTomorrowInIndia();
+
+  if (date === today) {
+    return "Today";
+  }
+
+  if (date === tomorrow) {
+    return "Tomorrow";
+  }
+
+  return new Intl.DateTimeFormat("en", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  }).format(new Date(`${date}T00:00:00`));
+}
+
+function BellIcon() {
+  return (
+    <svg
+      aria-hidden="true"
+      viewBox="0 0 24 24"
+      className="h-4 w-4 shrink-0"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9" />
+
+      <path d="M13.7 21a2 2 0 0 1-3.4 0" />
+    </svg>
+  );
 }
 
 function StatCard({ label, value, description }: StatCardProps) {
@@ -130,6 +206,77 @@ function QuickActionsSection() {
         </div>
       </div>
     </section>
+  );
+}
+
+function UpcomingRemindersCard({ reminders }: UpcomingRemindersCardProps) {
+  return (
+    <article className="relative overflow-hidden rounded-3xl border border-[#2A2A2A] bg-[#0B0B0B] p-4 shadow-[0_20px_70px_rgba(0,0,0,0.42)] sm:rounded-4xl sm:p-6">
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(225,29,72,0.20),transparent_34%),radial-gradient(circle_at_bottom_left,rgba(225,29,72,0.08),transparent_28%)]" />
+
+      <div className="absolute inset-0 bg-[linear-gradient(135deg,#fff_1px,transparent_1px)] bg-size-[18px_18px] opacity-[0.05]" />
+
+      <div className="relative z-10">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+          <div>
+            <p className="font-era-label flex items-center gap-2 text-[10px] text-[#E11D48]">
+              <BellIcon />
+              Upcoming Reminders
+            </p>
+
+            <h2 className="font-era mt-3 text-2xl leading-[1.08] text-white!">
+              Your ARMY Reminder List
+            </h2>
+
+            <p className="mt-3 max-w-2xl text-sm leading-6 text-white/65">
+              Your closest reminder dates appear here so important ARMY moments
+              do not get buried beneath screenshots and tabs.
+            </p>
+          </div>
+
+          <Link
+            href="/reminders"
+            className="font-era-label inline-flex w-fit shrink-0 rounded-full bg-[#E11D48] px-4 py-2 text-[10px] text-white! transition hover:-translate-y-0.5 hover:bg-[#C5163D]"
+          >
+            View All
+          </Link>
+        </div>
+
+        {reminders.length > 0 ? (
+          <div className="mt-6 space-y-3">
+            {reminders.map((record) => (
+              <div
+                key={record.reminder.id}
+                className="rounded-2xl border border-white/15 bg-black/35 p-4 backdrop-blur-sm"
+              >
+                <div className="flex min-w-0 flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                  <div className="min-w-0">
+                    <p className="wrap-break-word text-sm font-black text-white!">
+                      {record.title}
+                    </p>
+
+                    <p className="font-era-label mt-2 text-[9px] text-[#E11D48]">
+                      {record.targetLabel}
+                    </p>
+                  </div>
+
+                  <span className="font-era-label inline-flex w-fit shrink-0 rounded-full bg-[#E11D48] px-3 py-1 text-[9px] text-white!">
+                    {formatReminderDate(record.reminder.remind_on)}
+                  </span>
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="mt-6 rounded-2xl border border-white/10 bg-black/35 p-4">
+            <p className="text-sm leading-6 text-white/65">
+              No upcoming reminders yet. Open Calendar or Fan Projects and
+              choose Remind Me on an activity you want to follow.
+            </p>
+          </div>
+        )}
+      </div>
+    </article>
   );
 }
 
@@ -313,12 +460,13 @@ export default async function DashboardPage() {
     redirect("/login");
   }
 
-  const today = new Date().toISOString().slice(0, 10);
+  const today = getTodayInIndia();
 
   const [
     { data: profileData },
     { data: eventsData },
     { data: projectsData },
+    { data: reminderData },
     { count: memoryCount },
     { count: approvedCommunityProjectCount },
     { count: upcomingEventCount },
@@ -329,7 +477,9 @@ export default async function DashboardPage() {
       .from("events")
       .select("*")
       .gte("event_date", today)
-      .order("event_date", { ascending: true })
+      .order("event_date", {
+        ascending: true,
+      })
       .limit(4),
 
     supabase
@@ -338,7 +488,20 @@ export default async function DashboardPage() {
       .eq("status", "approved")
       .neq("category", "Past")
       .gte("project_date", today)
-      .order("project_date", { ascending: true })
+      .order("project_date", {
+        ascending: true,
+      })
+      .limit(4),
+
+    supabase
+      .from("user_reminders")
+      .select("*")
+      .eq("user_id", user.id)
+      .eq("is_enabled", true)
+      .gte("remind_on", today)
+      .order("remind_on", {
+        ascending: true,
+      })
       .limit(4),
 
     supabase
@@ -371,6 +534,80 @@ export default async function DashboardPage() {
   const upcomingEvents = (eventsData ?? []) as CalendarEvent[];
 
   const featuredProjects = (projectsData ?? []) as FanProject[];
+
+  const reminders = (reminderData ?? []) as UserReminder[];
+
+  const reminderEventIds = reminders
+    .map((reminder) => reminder.event_id)
+    .filter((id): id is string => Boolean(id));
+
+  const reminderProjectIds = reminders
+    .map((reminder) => reminder.fan_project_id)
+    .filter((id): id is string => Boolean(id));
+
+  let reminderEvents: CalendarEvent[] = [];
+
+  let reminderProjects: FanProject[] = [];
+
+  if (reminderEventIds.length > 0) {
+    const { data } = await supabase
+      .from("events")
+      .select("*")
+      .in("id", reminderEventIds);
+
+    reminderEvents = (data ?? []) as CalendarEvent[];
+  }
+
+  if (reminderProjectIds.length > 0) {
+    const { data } = await supabase
+      .from("fan_projects")
+      .select("*")
+      .in("id", reminderProjectIds);
+
+    reminderProjects = (data ?? []) as FanProject[];
+  }
+
+  const reminderEventMap = new Map(
+    reminderEvents.map((event) => [event.id, event]),
+  );
+
+  const reminderProjectMap = new Map(
+    reminderProjects.map((project) => [project.id, project]),
+  );
+
+  const dashboardReminders = reminders
+    .map((reminder) => {
+      if (reminder.target_type === "event" && reminder.event_id) {
+        const event = reminderEventMap.get(reminder.event_id);
+
+        if (!event) {
+          return null;
+        }
+
+        return {
+          reminder,
+          title: event.title,
+          targetLabel: "Calendar Event",
+        };
+      }
+
+      if (reminder.target_type === "fan_project" && reminder.fan_project_id) {
+        const project = reminderProjectMap.get(reminder.fan_project_id);
+
+        if (!project) {
+          return null;
+        }
+
+        return {
+          reminder,
+          title: project.title,
+          targetLabel: "Fan Project",
+        };
+      }
+
+      return null;
+    })
+    .filter((record): record is DashboardReminderRecord => Boolean(record));
 
   const fallbackDisplayName =
     profile?.display_name ||
@@ -413,6 +650,8 @@ export default async function DashboardPage() {
       </div>
 
       <NextEventCountdown event={upcomingEvents[0] ?? null} />
+
+      <UpcomingRemindersCard reminders={dashboardReminders} />
 
       <QuickActionsSection />
 

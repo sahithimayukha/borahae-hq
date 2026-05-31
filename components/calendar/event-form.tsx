@@ -306,6 +306,11 @@ export function EventForm({ userId }: EventFormProps) {
         <button
           type="submit"
           disabled={isSaving}
+          style={{
+            fontSize: "12px",
+            lineHeight: "1",
+            fontWeight: 900,
+          }}
           className="font-era-label inline-flex rounded-full bg-[#E11D48] px-6 py-3.5 text-[10px] text-white! transition hover:-translate-y-0.5 hover:bg-[#C5163D] disabled:cursor-not-allowed disabled:opacity-60"
         >
           {isSaving ? "Adding Event..." : "Add Calendar Event"}

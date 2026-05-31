@@ -4,7 +4,6 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import type { FanProject } from "@/types/database";
-import { DateInput } from "@/components/ui/date-input";
 
 type EditProjectFormProps = {
   project: FanProject;
@@ -99,6 +98,7 @@ export function EditProjectForm({ project, userId }: EditProjectFormProps) {
 
     if (trimmedTitle.length < 3) {
       setErrorMessage("Project title must contain at least 3 characters.");
+
       return;
     }
 
@@ -135,19 +135,22 @@ export function EditProjectForm({ project, userId }: EditProjectFormProps) {
         city: trimmedCity || null,
         description: trimmedDescription,
         project_link: trimmedProjectLink || null,
+        status: "pending",
         updated_at: new Date().toISOString(),
       })
       .eq("id", project.id)
       .eq("created_by", userId)
-      .eq("status", "pending");
+      .eq("is_read_only", false);
 
     if (error) {
       setErrorMessage(error.message);
       setIsSaving(false);
+
       return;
     }
 
-    setMessage("Your pending project submission has been updated.");
+    setMessage("Your changes were saved and sent for review.");
+
     setIsSaving(false);
 
     router.refresh();
@@ -167,8 +170,9 @@ export function EditProjectForm({ project, userId }: EditProjectFormProps) {
           fontSize: "10px",
           lineHeight: "1",
           fontWeight: 900,
+          letterSpacing: "0.12em",
         }}
-        className="inline-flex items-center justify-center rounded-full border border-[#111111] bg-white px-3 py-2 font-black uppercase tracking-[0.14em] text-[#111111] transition hover:bg-[#F7F7F7]"
+        className="inline-flex h-9 items-center justify-center rounded-full border border-[#111111] bg-white px-3 font-black uppercase tracking-[0.14em] text-[#111111] transition hover:bg-[#F7F7F7]"
       >
         Edit
       </button>
@@ -178,21 +182,32 @@ export function EditProjectForm({ project, userId }: EditProjectFormProps) {
   return (
     <form
       onSubmit={handleUpdate}
-      className="mt-5 rounded-4xl border border-[#2A2A2A] bg-[#F7F7F7] p-5"
+      className="mt-5 w-full rounded-4xl border border-[#2A2A2A] bg-[#F7F7F7] p-5"
     >
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <p className="font-era-label text-[10px] text-[#E11D48]">
-            Pending Submission Editor
+            Project Editor
           </p>
 
           <h3 className="font-era mt-3 text-2xl leading-[1.08] text-[#111111]">
             Update This Project
           </h3>
+
+          <p className="mt-3 max-w-xl text-sm leading-6 text-[#4B4B4B]">
+            Edited projects return to pending review before appearing in the
+            public feed again.
+          </p>
         </div>
 
         <button
           type="button"
+          style={{
+            fontSize: "10px",
+            lineHeight: "1",
+            fontWeight: 900,
+            letterSpacing: "0.12em",
+          }}
           onClick={handleCancel}
           className="font-era-label inline-flex w-fit rounded-full border border-[#2A2A2A] bg-white px-4 py-2 text-[9px] text-[#111111] transition hover:bg-[#EFEFEF]"
         >
@@ -269,9 +284,9 @@ export function EditProjectForm({ project, userId }: EditProjectFormProps) {
             Project Date
           </label>
 
-          <DateInput
+          <input
             id={`edit-project-date-${project.id}`}
-            // type="date"
+            type="date"
             value={projectDate}
             onChange={(event) => setProjectDate(event.target.value)}
             className="w-full rounded-2xl border border-[#2A2A2A] bg-white px-4 py-3 text-sm font-semibold text-[#111111] outline-none transition focus:border-[#E11D48] focus:ring-4 focus:ring-[#E11D48]/20"
@@ -370,9 +385,15 @@ export function EditProjectForm({ project, userId }: EditProjectFormProps) {
       <button
         type="submit"
         disabled={isSaving}
+        style={{
+          fontSize: "10px",
+          lineHeight: "1",
+          fontWeight: 900,
+          letterSpacing: "0.12em",
+        }}
         className="font-era-label mt-5 inline-flex rounded-full bg-[#E11D48] px-5 py-3 text-[10px] text-white! transition hover:-translate-y-0.5 hover:bg-[#C5163D] disabled:cursor-not-allowed disabled:opacity-60"
       >
-        {isSaving ? "Saving..." : "Save Changes"}
+        {isSaving ? "Saving..." : "Save Changes And Send For Review"}
       </button>
     </form>
   );

@@ -75,6 +75,8 @@ export type CalendarEvent = {
   created_at: string;
   updated_at: string;
   is_read_only: boolean;
+  starts_at: string | null;
+  official_timezone: string | null;
 };
 
 export type CalendarEventInsert = {
@@ -90,6 +92,8 @@ export type CalendarEventInsert = {
   created_at?: string;
   updated_at?: string;
   is_read_only?: boolean;
+  starts_at?: string | null;
+  official_timezone?: string | null;
 };
 
 export type CalendarEventUpdate = {
@@ -105,6 +109,8 @@ export type CalendarEventUpdate = {
   created_at?: string;
   updated_at?: string;
   is_read_only?: boolean;
+  starts_at?: string | null;
+  official_timezone?: string | null;
 };
 
 /* =========================================================
@@ -240,6 +246,39 @@ export type SupportRequestUpdate = {
   status?: string;
   created_at?: string;
   updated_at?: string;
+};
+
+/* =========================================================
+   SAVED ITEMS
+   ========================================================= */
+
+export type SavedItemType = "event" | "project";
+
+export type SavedItem = {
+  id: string;
+  user_id: string;
+  item_type: SavedItemType;
+  event_id: string | null;
+  project_id: string | null;
+  created_at: string;
+};
+
+export type SavedItemInsert = {
+  id?: string;
+  user_id: string;
+  item_type: SavedItemType;
+  event_id?: string | null;
+  project_id?: string | null;
+  created_at?: string;
+};
+
+export type SavedItemUpdate = {
+  id?: string;
+  user_id?: string;
+  item_type?: SavedItemType;
+  event_id?: string | null;
+  project_id?: string | null;
+  created_at?: string;
 };
 
 /* =========================================================
@@ -484,6 +523,20 @@ export type Database = {
         Relationships: [];
       };
 
+      saved_items: {
+        Row: SavedItem;
+        Insert: SavedItemInsert;
+        Update: SavedItemUpdate;
+        Relationships: [];
+      };
+
+      user_reminders: {
+        Row: UserReminder;
+        Insert: UserReminderInsert;
+        Update: UserReminderUpdate;
+        Relationships: [];
+      };
+
       official_notice_imports: {
         Row: OfficialNoticeImport;
         Insert: OfficialNoticeImportInsert;
@@ -547,4 +600,3 @@ export type Database = {
     CompositeTypes: Record<string, never>;
   };
 };
-

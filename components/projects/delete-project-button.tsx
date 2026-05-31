@@ -57,10 +57,18 @@ export function DeleteProjectButton({
         fontSize: "10px",
         lineHeight: "1",
         fontWeight: 900,
+        letterSpacing: "0.12em",
       }}
-      className="inline-flex items-center justify-center rounded-full border border-[#E11D48] bg-[#FFF1F3] px-3 py-2 font-black uppercase tracking-[0.14em] text-[#B91C3B] transition hover:bg-[#FFE4E9] disabled:cursor-not-allowed disabled:opacity-60"
+      className="inline-flex h-9 items-center justify-center rounded-full border border-[#E11D48] bg-[#FFF1F3] px-3 py-2 font-black uppercase tracking-[0.14em] text-[#B91C3B] transition hover:bg-[#FFE4E9] disabled:cursor-not-allowed disabled:opacity-60"
     >
       {isDeleting ? "Deleting..." : "Delete"}
     </button>
   );
 }
+        // style={{
+        //   fontSize: "10px",
+        //   lineHeight: "1",
+        //   fontWeight: 900,
+        //   letterSpacing: "0.12em",
+        // }}
+        // className="inline-flex h-9 items-center justify-center rounded-full border border-[#111111] bg-white px-3 font-black uppercase tracking-[0.14em] text-[#111111] transition hover:bg-[#F7F7F7]"

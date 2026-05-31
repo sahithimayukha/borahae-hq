@@ -19,6 +19,10 @@ const normalNavigationItems = [
     href: "/vault",
   },
   {
+    label: "ARMY Guide Hub",
+    href: "/army-guide",
+  },
+  {
     label: "My Profile",
     href: "/profile",
   },
@@ -50,6 +54,12 @@ function getNavigationItems(isAdmin: boolean) {
 function isNavigationItemActive(activePath: string, itemHref: string) {
   if (itemHref === "/admin") {
     return activePath === "/admin" || activePath.startsWith("/admin/");
+  }
+
+  if (itemHref === "/army-guide") {
+    return (
+      activePath === "/army-guide" || activePath.startsWith("/army-guide/")
+    );
   }
 
   return activePath === itemHref;
@@ -103,6 +113,7 @@ export function MobileAppNavigation({
   isAdmin = false,
 }: AppSidebarProps) {
   const navigationItems = getNavigationItems(isAdmin);
+
   return (
     <div className="md:hidden">
       <header className="sticky top-3 z-50 rounded-4xl border border-[#2A2A2A] bg-[#0B0B0B] p-4 shadow-[0_20px_70px_rgba(0,0,0,0.45)]">
@@ -125,7 +136,10 @@ export function MobileAppNavigation({
             <div className="absolute right-0 top-14 z-50 w-64 rounded-3xl border border-[#2A2A2A] bg-[#0B0B0B] p-3 shadow-[0_20px_70px_rgba(0,0,0,0.6)]">
               <nav className="space-y-2">
                 {navigationItems.map((item) => {
-                  const isActive = activePath === item.href;
+                  const isActive = isNavigationItemActive(
+                    activePath,
+                    item.href,
+                  );
 
                   return (
                     <Link
@@ -153,3 +167,4 @@ export function MobileAppNavigation({
     </div>
   );
 }
+

@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Anton, Inter } from "next/font/google";
+import { NavigationLoader } from "@/components/navigation-loader";
 import "./globals.css";
 
 const inter = Inter({
@@ -26,7 +27,10 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`${inter.variable} ${anton.variable}`}>{children}</body>
+      <body className={`${inter.variable} ${anton.variable}`}>
+        <NavigationLoader />
+        {children}
+      </body>
     </html>
   );
 }

@@ -5,6 +5,8 @@ import { PageHero } from "@/components/app/page-hero";
 import { DeleteEventButton } from "@/components/calendar/delete-event-button";
 import { EditEventForm } from "@/components/calendar/edit-event-form";
 import { EventForm } from "@/components/calendar/event-form";
+import { ReminderButton } from "@/components/reminders/reminder-button";
+import { SavedItemButton } from "@/components/saved/saved-item-button";
 import { createClient } from "@/lib/supabase/server";
 import type { CalendarEvent } from "@/types/database";
 
@@ -72,6 +74,69 @@ type PaginationProps = {
   selectedView: CalendarView;
   searchQuery: string;
 };
+
+function BellIcon() {
+  return (
+    <svg
+      aria-hidden="true"
+      viewBox="0 0 24 24"
+      className="h-4 w-4 shrink-0"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9" />
+
+      <path d="M13.7 21a2 2 0 0 1-3.4 0" />
+    </svg>
+  );
+}
+
+function BookmarkIcon() {
+  return (
+    <svg
+      aria-hidden="true"
+      viewBox="0 0 24 24"
+      className="h-4 w-4 shrink-0"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d="M6 4a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v18l-6-4-6 4Z" />
+    </svg>
+  );
+}
+
+function ConcertIcon() {
+  return (
+    <svg
+      aria-hidden="true"
+      viewBox="0 0 24 24"
+      className="h-4 w-4 shrink-0"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d="M4 7h16" />
+
+      <path d="M4 17h16" />
+
+      <path d="M6 7v10" />
+
+      <path d="M18 7v10" />
+
+      <path d="M9 11h6" />
+
+      <path d="M9 14h6" />
+    </svg>
+  );
+}
 
 function getTodayInIndia() {
   return new Intl.DateTimeFormat("en-CA", {
@@ -144,14 +209,14 @@ function EventCard({ event, currentUserId, today }: EventCardProps) {
     event.created_by === currentUserId && !isPastEvent && !isReadOnlyEvent;
 
   return (
-    <article className="min-w-0 overflow-hidden rounded-3xl border border-[#2A2A2A] bg-white p-4 text-[#111111] shadow-[0_20px_70px_rgba(0,0,0,0.35)] sm:rounded-4xl sm:p-6">
+    <article className="relative min-w-0 rounded-3xl border border-[#2A2A2A] bg-white p-4 text-[#111111] shadow-[0_20px_70px_rgba(0,0,0,0.35)] sm:rounded-4xl sm:p-6">
       <div className="flex min-w-0 flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div className="min-w-0">
           <p className="font-era-label text-[10px] text-[#E11D48]">
             {formatEventDate(event.event_date)}
           </p>
 
-          <h2 className="font-era mt-3 wrap-break-wordword text-2xl leading-[1.1] text-[#111111]">
+          <h2 className="font-era mt-3 wrap-break-word text-2xl leading-[1.1] text-[#111111]">
             {event.title}
           </h2>
         </div>
@@ -185,24 +250,40 @@ function EventCard({ event, currentUserId, today }: EventCardProps) {
         ) : null}
       </div>
 
-      {event.event_link ? (
-        <a
-          href={event.event_link}
-          target="_blank"
-          rel="noreferrer"
-          className="font-era-label mt-6 inline-flex rounded-full bg-[#E11D48] px-5 py-3 text-[10px] text-white! transition hover:-translate-y-0.5 hover:bg-[#C5163D]"
-        >
-          View Event
-        </a>
-      ) : null}
+      <div className="mt-6 border-t border-[#E7E7E7] pt-4">
+        <div className="flex min-w-0 flex-wrap items-center gap-2.5">
+          {event.event_link ? (
+            <a
+              href={event.event_link}
+              target="_blank"
+              rel="noreferrer"
+              className="font-era-label inline-flex h-10 items-center whitespace-nowrap rounded-full bg-[#E11D48] px-5 text-[10px] text-white! transition hover:-translate-y-0.5 hover:bg-[#C5163D]"
+            >
+              View Event
+            </a>
+          ) : null}
 
-      {canManageEvent ? (
-        <div className="mt-5 flex flex-wrap items-center gap-2">
-          <EditEventForm event={event} userId={currentUserId} />
+          {!isPastEvent ? (
+            <ReminderButton targetType="event" targetId={event.id} />
+          ) : null}
 
-          <DeleteEventButton eventId={event.id} />
+          <SavedItemButton itemType="event" itemId={event.id} />
         </div>
-      ) : null}
+
+        {canManageEvent ? (
+          <div className="mt-4 flex flex-wrap items-center justify-between gap-3 border-t border-[#ECECEC] pt-4">
+            <p className="font-era-label text-[9px] text-[#777777]">
+              Manage Your Event
+            </p>
+
+            <div className="flex flex-wrap items-center gap-2">
+              <EditEventForm event={event} userId={currentUserId} />
+
+              <DeleteEventButton eventId={event.id} />
+            </div>
+          </div>
+        ) : null}
+      </div>
     </article>
   );
 }
@@ -466,6 +547,7 @@ export default async function CalendarPage({
   }
 
   const rangeStart = (currentPage - 1) * EVENTS_PER_PAGE;
+
   const rangeEnd = rangeStart + EVENTS_PER_PAGE - 1;
 
   eventsQuery = eventsQuery
@@ -500,6 +582,32 @@ export default async function CalendarPage({
         title="Your ARIRANG Calendar"
         description="Track upcoming concerts, anniversaries, comeback dates, streaming moments, and important ARMY events inside one organized calendar."
       />
+
+      <div className="flex flex-wrap justify-end gap-3">
+        <Link
+          href="/reminders"
+          className="font-era-label inline-flex items-center gap-2 whitespace-nowrap rounded-full border border-[#E11D48] bg-white px-5 py-3 text-[10px] text-[#B91C3B] transition hover:-translate-y-0.5 hover:bg-[#FFF1F3]"
+        >
+          <BellIcon />
+          My Reminders
+        </Link>
+
+        <Link
+          href="/concert-mode"
+          className="font-era-label inline-flex items-center gap-2 whitespace-nowrap rounded-full bg-[#E11D48] px-5 py-3 text-[10px] text-white! transition hover:-translate-y-0.5 hover:bg-[#C5163D]"
+        >
+          <ConcertIcon />
+          Open Concert Mode
+        </Link>
+
+        <Link
+          href="/saved"
+          className="font-era-label inline-flex items-center gap-2 whitespace-nowrap rounded-full border border-white/25 bg-[#151515] px-5 py-3 text-[10px] text-white! transition hover:-translate-y-0.5 hover:bg-[#222222]"
+        >
+          <BookmarkIcon />
+          My Saved
+        </Link>
+      </div>
 
       <EventForm userId={user.id} />
 
