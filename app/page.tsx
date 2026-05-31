@@ -1,5 +1,7 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import Link from "next/link";
 import { PublicFooter } from "@/components/app/public-footer";
+import { Analytics } from "@vercel/analytics/next";
 
 const featureCards = [
   {
