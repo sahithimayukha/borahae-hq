@@ -39,7 +39,6 @@ type ProjectsPageProps = {
 
 type FanProjectCardProps = {
   project: FanProjectWithReadOnly;
-  currentUserId: string;
 };
 
 type ProjectToolsProps = {
@@ -53,6 +52,7 @@ type MySubmittedProjectsProps = {
   userId: string;
   currentPage: number;
   totalPages: number;
+  totalProjects: number;
   selectedCategory: string;
   searchQuery: string;
   publicPage: number;
@@ -72,6 +72,23 @@ type PublicPaginationProps = {
   searchQuery: string;
   submittedPage: number;
 };
+
+function BookmarkIcon() {
+  return (
+    <svg
+      aria-hidden="true"
+      viewBox="0 0 24 24"
+      className="h-4 w-4 shrink-0"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d="M6 4a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v18l-6-4-6 4Z" />
+    </svg>
+  );
+}
 
 function formatProjectDate(date: string | null) {
   if (!date) {
@@ -126,47 +143,44 @@ function getStatusStyles(status: string) {
   const normalizedStatus = status.toLowerCase();
 
   if (normalizedStatus === "approved") {
-    return "border-[#166534] bg-[#DCFCE7] text-[#166534]";
+    return "border-[#166534] bg-[#F0FDF4] text-[#166534]";
   }
 
   if (normalizedStatus === "rejected") {
     return "border-[#B91C3B] bg-[#FFF1F3] text-[#B91C3B]";
   }
 
-  return "border-[#E11D48] bg-[#FFF1F3] text-[#B91C3B]";
+  return "border-[#B7791F] bg-[#FFFBEB] text-[#8A5A00]";
 }
 
-function getStatusMessage(status: string) {
+function getStatusLabel(status: string) {
   const normalizedStatus = status.toLowerCase();
 
   if (normalizedStatus === "approved") {
-    return "This submission has been approved and appears in the public project feed. Editing it sends the updated version back for review.";
+    return "Approved";
   }
 
   if (normalizedStatus === "rejected") {
-    return "This submission was not approved. You can edit it and send a revised version for review.";
+    return "Rejected";
   }
 
-  return "This submission is waiting for review. It is not visible in the public feed yet.";
+  return "Pending";
 }
 
-function FanProjectCard({ project, currentUserId }: FanProjectCardProps) {
+function FanProjectCard({ project }: FanProjectCardProps) {
   const locationText = [project.city, project.country]
     .filter(Boolean)
     .join(", ");
 
-  const canManageProject =
-    project.created_by === currentUserId && project.is_read_only !== true;
-
   return (
-    <article className="relative min-w-0 rounded-3xl border border-[#2A2A2A] bg-white p-4 text-[#111111] shadow-[0_20px_70px_rgba(0,0,0,0.35)] sm:rounded-4xl sm:p-6">
+    <article className="flex min-w-0 flex-col rounded-3xl border border-[#2A2A2A] bg-white p-4 text-[#111111] shadow-[0_20px_70px_rgba(0,0,0,0.35)] sm:rounded-4xl sm:p-6">
       <div className="flex min-w-0 flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div className="min-w-0">
           <p className="font-era-label text-[10px] text-[#E11D48]">
             {formatProjectDate(project.project_date)}
           </p>
 
-          <h2 className="font-era mt-3 wrap-break-word text-2xl leading-[1.1] text-[#111111]">
+          <h2 className="font-era mt-3 wrap-break-word text-2xl leading-[1.08] text-[#111111]">
             {project.title}
           </h2>
 
@@ -177,7 +191,7 @@ function FanProjectCard({ project, currentUserId }: FanProjectCardProps) {
           ) : null}
         </div>
 
-        <span className="font-era-label inline-flex w-fit shrink-0 rounded-full bg-[#111111] px-4 py-2 text-[10px] text-white!">
+        <span className="font-era-label inline-flex w-fit shrink-0 rounded-full bg-[#111111] px-4 py-2 text-[9px] text-white!">
           {project.category}
         </span>
       </div>
@@ -188,7 +202,7 @@ function FanProjectCard({ project, currentUserId }: FanProjectCardProps) {
         </p>
       ) : null}
 
-      <div className="mt-6 flex min-w-0 flex-wrap gap-3 text-sm font-bold text-[#111111]">
+      <div className="mt-5 flex min-w-0 flex-wrap gap-2 text-sm font-bold text-[#111111]">
         {locationText ? (
           <span className="max-w-full wrap-break-word rounded-full bg-[#F7F7F7] px-4 py-2">
             {locationText}
@@ -202,42 +216,25 @@ function FanProjectCard({ project, currentUserId }: FanProjectCardProps) {
         ) : null}
       </div>
 
-      <div className="mt-6 border-t border-[#E7E7E7] pt-4">
-        <div className="flex min-w-0 flex-wrap items-center gap-2.5">
-          {project.project_link ? (
-            <a
-              href={project.project_link}
-              target="_blank"
-              rel="noreferrer"
-              className="font-era-label inline-flex h-9 items-center whitespace-nowrap rounded-full bg-[#E11D48] px-4 text-[9px] text-white! transition hover:-translate-y-0.5 hover:bg-[#C5163D]"
-            >
-              View Project
-            </a>
-          ) : null}
+      <div className="mt-auto pt-6">
+        <div className="border-t border-[#E7E7E7] pt-4">
+          <div className="flex min-w-0 flex-wrap items-center gap-2">
+            {project.project_link ? (
+              <a
+                href={project.project_link}
+                target="_blank"
+                rel="noreferrer"
+                className="font-era-label inline-flex h-9 items-center whitespace-nowrap rounded-full bg-[#E11D48] px-4 text-[8px] text-white! transition hover:-translate-y-0.5 hover:bg-[#C5163D]"
+              >
+                View Project
+              </a>
+            ) : null}
 
-          <ReminderButton targetType="fan_project" targetId={project.id} />
+            <ReminderButton targetType="fan_project" targetId={project.id} />
 
-          <SavedItemButton itemType="project" itemId={project.id} />
-        </div>
-
-        {canManageProject ? (
-          <div className="mt-4 border-t border-[#ECECEC] pt-4">
-            <div className="flex flex-wrap items-center justify-between gap-3">
-              <p className="font-era-label text-[9px] text-[#777777]">
-                Manage Your Project
-              </p>
-
-              <div className="flex flex-wrap items-center gap-2">
-                <EditProjectForm project={project} userId={currentUserId} />
-
-                <DeleteProjectButton
-                  projectId={project.id}
-                  userId={currentUserId}
-                />
-              </div>
-            </div>
+            <SavedItemButton itemType="project" itemId={project.id} />
           </div>
-        ) : null}
+        </div>
       </div>
     </article>
   );
@@ -248,6 +245,7 @@ function MySubmittedProjects({
   userId,
   currentPage,
   totalPages,
+  totalProjects,
   selectedCategory,
   searchQuery,
   publicPage,
@@ -259,26 +257,39 @@ function MySubmittedProjects({
       <div className="absolute inset-0 bg-[linear-gradient(135deg,#fff_1px,transparent_1px)] bg-size-[18px_18px] opacity-[0.08]" />
 
       <div className="relative z-10 min-w-0">
-        <p className="font-era-label text-[10px] text-[#E11D48]">
-          Personal Submissions
-        </p>
+        <div className="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <p className="font-era-label text-[10px] text-[#E11D48]">
+              Personal Submissions
+            </p>
 
-        <h2 className="font-era-display mt-4 max-w-4xl text-4xl text-white! sm:text-6xl">
-          My Submitted
-          <span className="mt-3 block w-fit bg-[#E11D48] px-4 py-2 text-white!">
-            Projects.
-          </span>
-        </h2>
+            <h2 className="font-era-display mt-4 max-w-4xl text-4xl text-white! sm:text-6xl">
+              My Submitted
+              <span className="mt-3 block w-fit bg-[#E11D48] px-4 py-2 text-white!">
+                Projects.
+              </span>
+            </h2>
 
-        <p className="mt-5 max-w-2xl border-l-4 border-[#E11D48] pl-4 text-sm font-semibold leading-7 text-white/75">
-          Track your submissions, edit details, and remove projects you no
-          longer want to keep. Updated projects return to review before they
-          reappear publicly.
-        </p>
+            <p className="mt-5 max-w-2xl border-l-4 border-[#E11D48] pl-4 text-sm font-semibold leading-7 text-white/75">
+              Track your project status, edit details, or remove a submission
+              you no longer want to keep.
+            </p>
+          </div>
+
+          <div className="w-fit rounded-3xl border border-white/15 bg-black/35 px-5 py-4">
+            <p className="font-era-label text-[9px] text-[#FF7894]">
+              Total Submissions
+            </p>
+
+            <p className="font-era mt-2 text-4xl leading-none text-white!">
+              {totalProjects}
+            </p>
+          </div>
+        </div>
 
         {projects.length > 0 ? (
           <>
-            <div className="mt-8 grid min-w-0 gap-5 lg:grid-cols-2">
+            <div className="mt-8 grid min-w-0 auto-rows-fr gap-4 lg:grid-cols-2">
               {projects.map((project) => {
                 const locationText = [project.city, project.country]
                   .filter(Boolean)
@@ -287,80 +298,81 @@ function MySubmittedProjects({
                 return (
                   <article
                     key={project.id}
-                    className="min-w-0 rounded-3xl border border-white/15 bg-white p-4 text-[#111111] shadow-[0_18px_50px_rgba(0,0,0,0.25)] sm:rounded-4xl sm:p-5"
+                    className="flex min-w-0 flex-col rounded-3xl border border-white/15 bg-white p-5 text-[#111111] shadow-[0_18px_50px_rgba(0,0,0,0.25)]"
                   >
-                    <div className="flex min-w-0 flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                    <div className="flex min-w-0 items-start justify-between gap-3">
                       <div className="min-w-0">
-                        <p className="font-era-label text-[10px] text-[#E11D48]">
+                        <p className="font-era-label text-[9px] text-[#E11D48]">
                           Submitted {formatSubmittedDate(project.created_at)}
                         </p>
 
-                        <h3 className="font-era mt-3 wrap-break-word text-2xl leading-[1.1] text-[#111111]">
+                        <h3 className="font-era mt-3 wrap-break-word text-2xl leading-[1.05] text-[#111111]">
                           {project.title}
                         </h3>
 
-                        <p className="mt-2 text-sm font-semibold text-[#4B4B4B]">
+                        <p className="mt-2 text-xs font-black uppercase tracking-[0.12em] text-[#555555]">
                           {project.category}
                         </p>
                       </div>
 
                       <span
-                        className={`font-era-label inline-flex w-fit shrink-0 rounded-full border px-4 py-2 text-[10px] ${getStatusStyles(
+                        className={`shrink-0 rounded-full border px-3 py-2 text-[8px] font-black uppercase tracking-[0.12em] ${getStatusStyles(
                           project.status,
                         )}`}
                       >
-                        {project.status}
+                        {getStatusLabel(project.status)}
                       </span>
                     </div>
 
                     {project.description ? (
-                      <p className="mt-5 wrap-break-word text-sm leading-6 text-[#4B4B4B]">
+                      <p className="mt-4 wrap-break-word text-sm leading-6 text-[#4B4B4B]">
                         {project.description}
                       </p>
                     ) : null}
 
-                    <p className="mt-5 rounded-2xl bg-[#F7F7F7] p-4 text-xs font-semibold leading-5 text-[#4B4B4B]">
-                      {getStatusMessage(project.status)}
-                    </p>
-
-                    <div className="mt-5 flex min-w-0 flex-wrap gap-3 text-xs font-bold text-[#111111]">
+                    <div className="mt-4 flex min-w-0 flex-wrap gap-2">
                       {locationText ? (
-                        <span className="max-w-full wrap-break-word rounded-full bg-[#F7F7F7] px-4 py-2">
+                        <span className="max-w-full wrap-break-word rounded-full bg-[#F7F7F7] px-3 py-2 text-xs font-bold text-[#111111]">
                           {locationText}
                         </span>
                       ) : null}
 
-                      <span className="rounded-full bg-[#F7F7F7] px-4 py-2">
+                      <span className="rounded-full bg-[#F7F7F7] px-3 py-2 text-xs font-bold text-[#111111]">
                         {formatProjectDate(project.project_date)}
                       </span>
                     </div>
 
-                    <div className="mt-5 border-t border-[#ECECEC] pt-4">
-                      <div className="flex flex-wrap items-center justify-between gap-3">
-                        <p className="font-era-label text-[9px] text-[#777777]">
-                          Manage Your Submission
-                        </p>
+                    <div className="mt-auto pt-5">
+                      <div className="border-t border-[#ECECEC] pt-4">
+                        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                          <p className="font-era-label text-[9px] text-[#777777]">
+                            Manage Submission
+                          </p>
 
-                        <div className="flex flex-wrap items-center gap-2">
-                          <EditProjectForm project={project} userId={userId} />
+                          <div className="flex flex-wrap items-center gap-2">
+                            <EditProjectForm
+                              project={project}
+                              userId={userId}
+                            />
 
-                          <DeleteProjectButton
-                            projectId={project.id}
-                            userId={userId}
-                          />
+                            <DeleteProjectButton
+                              projectId={project.id}
+                              userId={userId}
+                            />
+
+                            {project.project_link ? (
+                              <a
+                                href={project.project_link}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="inline-flex h-9 items-center justify-center rounded-full bg-[#111111] px-3 text-[8px] font-black uppercase leading-none tracking-[0.14em] text-white! transition hover:bg-[#E11D48]"
+                              >
+                                Open Link
+                              </a>
+                            ) : null}
+                          </div>
                         </div>
                       </div>
-
-                      {project.project_link ? (
-                        <a
-                          href={project.project_link}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="mt-4 inline-flex items-center justify-center rounded-full bg-[#111111] px-3 py-2 text-[8px] font-black uppercase leading-none tracking-[0.14em] text-white! transition hover:bg-[#E11D48]"
-                        >
-                          Open Link
-                        </a>
-                      ) : null}
                     </div>
                   </article>
                 );
@@ -409,7 +421,7 @@ function MySubmittedProjects({
             ) : null}
           </>
         ) : (
-          <div className="mt-8 rounded-4xl border border-white/15 bg-black/35 p-6">
+          <div className="mt-8 rounded-3xl border border-white/15 bg-black/35 p-6">
             <p className="font-era text-2xl leading-[1.1] text-white!">
               No Personal Submissions Yet
             </p>
@@ -529,23 +541,6 @@ function ProjectTools({
         </div>
       </div>
     </section>
-  );
-}
-
-function BookmarkIcon() {
-  return (
-    <svg
-      aria-hidden="true"
-      viewBox="0 0 24 24"
-      className="h-4 w-4 shrink-0"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      <path d="M6 4a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v18l-6-4-6 4Z" />
-    </svg>
   );
 }
 
@@ -786,6 +781,7 @@ export default async function ProjectsPage({
           userId={user.id}
           currentPage={currentSubmittedPage}
           totalPages={totalSubmittedPages}
+          totalProjects={totalSubmittedProjects}
           selectedCategory={selectedCategory}
           searchQuery={searchQuery}
           publicPage={currentPublicPage}
@@ -832,13 +828,9 @@ export default async function ProjectsPage({
             </p>
           </div>
 
-          <div className="grid min-w-0 gap-5 lg:grid-cols-2">
+          <div className="grid min-w-0 auto-rows-fr gap-5 lg:grid-cols-2">
             {publicProjects.map((project) => (
-              <FanProjectCard
-                key={project.id}
-                project={project}
-                currentUserId={user.id}
-              />
+              <FanProjectCard key={project.id} project={project} />
             ))}
           </div>
 

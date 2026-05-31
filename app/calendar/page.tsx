@@ -2,6 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { AppShell } from "@/components/app/app-shell";
 import { PageHero } from "@/components/app/page-hero";
+import { AddToCalendarButton } from "@/components/calendar/add-to-calendar-button";
 import { DeleteEventButton } from "@/components/calendar/delete-event-button";
 import { EditEventForm } from "@/components/calendar/edit-event-form";
 import { EventForm } from "@/components/calendar/event-form";
@@ -251,13 +252,13 @@ function EventCard({ event, currentUserId, today }: EventCardProps) {
       </div>
 
       <div className="mt-6 border-t border-[#E7E7E7] pt-4">
-        <div className="flex min-w-0 flex-wrap items-center gap-2.5">
+        <div className="flex min-w-0 flex-wrap items-center gap-1.5 sm:flex-nowrap">
           {event.event_link ? (
             <a
               href={event.event_link}
               target="_blank"
               rel="noreferrer"
-              className="font-era-label inline-flex h-10 items-center whitespace-nowrap rounded-full bg-[#E11D48] px-5 text-[10px] text-white! transition hover:-translate-y-0.5 hover:bg-[#C5163D]"
+              className="font-era-label inline-flex h-9 shrink-0 items-center whitespace-nowrap rounded-full bg-[#E11D48] px-3 text-[8px] text-white! transition hover:-translate-y-0.5 hover:bg-[#C5163D]"
             >
               View Event
             </a>
@@ -268,6 +269,14 @@ function EventCard({ event, currentUserId, today }: EventCardProps) {
           ) : null}
 
           <SavedItemButton itemType="event" itemId={event.id} />
+
+          <AddToCalendarButton
+            title={event.title}
+            eventDate={event.event_date}
+            description={event.description}
+            location={event.location}
+            eventLink={event.event_link}
+          />
         </div>
 
         {canManageEvent ? (
@@ -583,10 +592,10 @@ export default async function CalendarPage({
         description="Track upcoming concerts, anniversaries, comeback dates, streaming moments, and important ARMY events inside one organized calendar."
       />
 
-      <div className="flex flex-wrap justify-end gap-3">
+      <div className="grid grid-cols-2 gap-3 sm:flex sm:flex-wrap sm:justify-end">
         <Link
           href="/reminders"
-          className="font-era-label inline-flex items-center gap-2 whitespace-nowrap rounded-full border border-[#E11D48] bg-white px-5 py-3 text-[10px] text-[#B91C3B] transition hover:-translate-y-0.5 hover:bg-[#FFF1F3]"
+          className="font-era-label inline-flex min-h-11 items-center justify-center gap-2 whitespace-nowrap rounded-full border border-[#E11D48] bg-white px-4 py-3 text-center text-[9px] text-[#B91C3B] transition hover:-translate-y-0.5 hover:bg-[#FFF1F3] sm:px-5 sm:text-[10px]"
         >
           <BellIcon />
           My Reminders
@@ -594,7 +603,7 @@ export default async function CalendarPage({
 
         <Link
           href="/concert-mode"
-          className="font-era-label inline-flex items-center gap-2 whitespace-nowrap rounded-full bg-[#E11D48] px-5 py-3 text-[10px] text-white! transition hover:-translate-y-0.5 hover:bg-[#C5163D]"
+          className="font-era-label inline-flex min-h-11 items-center justify-center gap-2 whitespace-nowrap rounded-full bg-[#E11D48] px-4 py-3 text-center text-[9px] text-white! transition hover:-translate-y-0.5 hover:bg-[#C5163D] sm:px-5 sm:text-[10px]"
         >
           <ConcertIcon />
           Open Concert Mode
@@ -602,7 +611,7 @@ export default async function CalendarPage({
 
         <Link
           href="/saved"
-          className="font-era-label inline-flex items-center gap-2 whitespace-nowrap rounded-full border border-white/25 bg-[#151515] px-5 py-3 text-[10px] text-white! transition hover:-translate-y-0.5 hover:bg-[#222222]"
+          className="font-era-label col-span-2 inline-flex min-h-11 items-center justify-center gap-2 whitespace-nowrap rounded-full border border-white/25 bg-[#151515] px-5 py-3 text-center text-[9px] text-white! transition hover:-translate-y-0.5 hover:bg-[#222222] sm:col-span-1 sm:text-[10px]"
         >
           <BookmarkIcon />
           My Saved
