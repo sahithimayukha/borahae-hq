@@ -14,7 +14,7 @@ const anton = Anton({
 });
 
 export const metadata: Metadata = {
-  title: "BorahaeHQ | ARIRANG Era Hub",
+  title: "BorahaeHQ | ARMY Hub",
   description:
     "BorahaeHQ is an unofficial fan-made command center for ARMY events, fan projects, comeback tasks, and personal memories.",
 };
