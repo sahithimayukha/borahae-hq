@@ -3,14 +3,11 @@
 
 "use client";
 
-import {
-  useEffect,
-  useRef,
-  useState,
-} from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import type { Memory } from "@/types/database";
+import { DateInput } from "@/components/ui/date-input";
 
 type EditMemoryFormProps = {
   memory: Memory;
@@ -18,11 +15,7 @@ type EditMemoryFormProps = {
   currentCoverImageUrl: string | null;
 };
 
-const acceptedImageTypes = [
-  "image/jpeg",
-  "image/png",
-  "image/webp",
-];
+const acceptedImageTypes = ["image/jpeg", "image/png", "image/webp"];
 
 const maximumImageSizeInBytes = 5 * 1024 * 1024;
 
@@ -68,17 +61,13 @@ export function EditMemoryForm({
   const [title, setTitle] = useState(memory.title);
   const [content, setContent] = useState(memory.content);
   const [mood, setMood] = useState(memory.mood ?? "");
-  const [memoryDate, setMemoryDate] = useState(
-    memory.memory_date ?? "",
-  );
+  const [memoryDate, setMemoryDate] = useState(memory.memory_date ?? "");
 
-  const [selectedImage, setSelectedImage] = useState<File | null>(
+  const [selectedImage, setSelectedImage] = useState<File | null>(null);
+
+  const [newImagePreviewUrl, setNewImagePreviewUrl] = useState<string | null>(
     null,
   );
-
-  const [newImagePreviewUrl, setNewImagePreviewUrl] = useState<
-    string | null
-  >(null);
 
   const [shouldRemoveCurrentImage, setShouldRemoveCurrentImage] =
     useState(false);
@@ -122,9 +111,7 @@ export function EditMemoryForm({
     setIsEditing(false);
   }
 
-  function handleImageChange(
-    event: React.ChangeEvent<HTMLInputElement>,
-  ) {
+  function handleImageChange(event: React.ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0] ?? null;
 
     const imageError = validateImage(file);
@@ -169,9 +156,7 @@ export function EditMemoryForm({
     setShouldRemoveCurrentImage(false);
   }
 
-  async function handleUpdate(
-    event: React.FormEvent<HTMLFormElement>,
-  ) {
+  async function handleUpdate(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
     setMessage("");
@@ -218,8 +203,7 @@ export function EditMemoryForm({
     if (selectedImage) {
       const fileExtension = getFileExtension(selectedImage);
 
-      nextCoverImagePath =
-        `${userId}/${crypto.randomUUID()}.${fileExtension}`;
+      nextCoverImagePath = `${userId}/${crypto.randomUUID()}.${fileExtension}`;
 
       const { error: uploadError } = await supabase.storage
         .from("memory-images")
@@ -365,13 +349,11 @@ export function EditMemoryForm({
             Memory Date
           </label>
 
-          <input
+          <DateInput
             id={`edit-memory-date-${memory.id}`}
-            type="date"
+            // type="date"
             value={memoryDate}
-            onChange={(event) =>
-              setMemoryDate(event.target.value)
-            }
+            onChange={(event) => setMemoryDate(event.target.value)}
             className="w-full rounded-2xl border border-[#2A2A2A] bg-white px-4 py-3 text-sm font-semibold text-[#111111] outline-none transition focus:border-[#E11D48] focus:ring-4 focus:ring-[#E11D48]/20"
           />
         </div>
@@ -407,9 +389,7 @@ export function EditMemoryForm({
         <textarea
           id={`edit-memory-content-${memory.id}`}
           value={content}
-          onChange={(event) =>
-            setContent(event.target.value)
-          }
+          onChange={(event) => setContent(event.target.value)}
           placeholder="Write the moment you want to preserve..."
           maxLength={3000}
           rows={7}
@@ -419,9 +399,7 @@ export function EditMemoryForm({
       </div>
 
       <div className="mt-4 rounded-4xl border border-dashed border-[#2A2A2A] bg-white p-5">
-        <p className="font-era-label text-[9px] text-[#111111]">
-          Cover Image
-        </p>
+        <p className="font-era-label text-[9px] text-[#111111]">Cover Image</p>
 
         <p className="mt-2 text-xs font-semibold leading-5 text-[#777777]">
           Keep the current cover, remove it, or upload one replacement image.

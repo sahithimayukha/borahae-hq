@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import { DateInput } from "@/components/ui/date-input";
 
 type EventFormProps = {
   userId: string;
@@ -194,10 +195,10 @@ export function EventForm({ userId }: EventFormProps) {
               Event Date
             </label>
 
-            <input
+            <DateInput
               id="event-date"
               name="eventDate"
-              type="date"
+              // type="date"
               value={eventDate}
               onChange={(event) => setEventDate(event.target.value)}
               required

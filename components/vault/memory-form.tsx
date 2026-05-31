@@ -2,23 +2,16 @@
 /* eslint-disable react-hooks/set-state-in-effect */
 "use client";
 
-import {
-  useEffect,
-  useRef,
-  useState,
-} from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import { DateInput } from "@/components/ui/date-input";
 
 type MemoryFormProps = {
   userId: string;
 };
 
-const acceptedImageTypes = [
-  "image/jpeg",
-  "image/png",
-  "image/webp",
-];
+const acceptedImageTypes = ["image/jpeg", "image/png", "image/webp"];
 
 const maximumImageSizeInBytes = 5 * 1024 * 1024;
 
@@ -59,9 +52,7 @@ export function MemoryForm({ userId }: MemoryFormProps) {
   const [mood, setMood] = useState("");
   const [memoryDate, setMemoryDate] = useState("");
 
-  const [selectedImage, setSelectedImage] = useState<File | null>(
-    null,
-  );
+  const [selectedImage, setSelectedImage] = useState<File | null>(null);
 
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 
@@ -84,9 +75,7 @@ export function MemoryForm({ userId }: MemoryFormProps) {
     };
   }, [selectedImage]);
 
-  function handleImageChange(
-    event: React.ChangeEvent<HTMLInputElement>,
-  ) {
+  function handleImageChange(event: React.ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0] ?? null;
 
     const imageError = validateImage(file);
@@ -116,9 +105,7 @@ export function MemoryForm({ userId }: MemoryFormProps) {
     }
   }
 
-  async function handleSubmit(
-    event: React.FormEvent<HTMLFormElement>,
-  ) {
+  async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
     setMessage("");
@@ -176,24 +163,20 @@ export function MemoryForm({ userId }: MemoryFormProps) {
       }
     }
 
-    const { error: insertError } = await supabase
-      .from("memories")
-      .insert({
-        user_id: userId,
-        title: trimmedTitle,
-        content: trimmedContent,
-        mood: trimmedMood || null,
-        memory_date: memoryDate || null,
-        visibility: "private",
-        cover_image_path: coverImagePath,
-        updated_at: new Date().toISOString(),
-      });
+    const { error: insertError } = await supabase.from("memories").insert({
+      user_id: userId,
+      title: trimmedTitle,
+      content: trimmedContent,
+      mood: trimmedMood || null,
+      memory_date: memoryDate || null,
+      visibility: "private",
+      cover_image_path: coverImagePath,
+      updated_at: new Date().toISOString(),
+    });
 
     if (insertError) {
       if (coverImagePath) {
-        await supabase.storage
-          .from("memory-images")
-          .remove([coverImagePath]);
+        await supabase.storage.from("memory-images").remove([coverImagePath]);
       }
 
       setErrorMessage(insertError.message);
@@ -263,10 +246,10 @@ export function MemoryForm({ userId }: MemoryFormProps) {
               Memory Date
             </label>
 
-            <input
+            <DateInput
               id="memory-date"
               name="memoryDate"
-              type="date"
+              // type="date"
               value={memoryDate}
               onChange={(event) => setMemoryDate(event.target.value)}
               className="w-full rounded-2xl border border-[#2A2A2A] bg-white px-4 py-3.5 text-sm font-semibold text-[#111111] outline-none transition focus:border-[#E11D48] focus:ring-4 focus:ring-[#E11D48]/20"

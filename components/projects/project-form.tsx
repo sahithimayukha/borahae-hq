@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import { DateInput } from "@/components/ui/date-input";
 
 type ProjectFormProps = {
   userId: string;
@@ -49,9 +50,7 @@ export function ProjectForm({ userId }: ProjectFormProps) {
   const [errorMessage, setErrorMessage] = useState("");
   const [isSaving, setIsSaving] = useState(false);
 
-  async function handleSubmit(
-    event: React.FormEvent<HTMLFormElement>,
-  ) {
+  async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
     setMessage("");
@@ -96,21 +95,19 @@ export function ProjectForm({ userId }: ProjectFormProps) {
 
     const supabase = createClient();
 
-    const { error } = await supabase
-      .from("fan_projects")
-      .insert({
-        created_by: userId,
-        title: trimmedTitle,
-        category,
-        organizer_name: trimmedOrganizerName || null,
-        project_date: projectDate || null,
-        country: trimmedCountry || null,
-        city: trimmedCity || null,
-        description: trimmedDescription,
-        project_link: trimmedProjectLink || null,
-        status: "pending",
-        updated_at: new Date().toISOString(),
-      });
+    const { error } = await supabase.from("fan_projects").insert({
+      created_by: userId,
+      title: trimmedTitle,
+      category,
+      organizer_name: trimmedOrganizerName || null,
+      project_date: projectDate || null,
+      country: trimmedCountry || null,
+      city: trimmedCity || null,
+      description: trimmedDescription,
+      project_link: trimmedProjectLink || null,
+      status: "pending",
+      updated_at: new Date().toISOString(),
+    });
 
     if (error) {
       setErrorMessage(error.message);
@@ -127,9 +124,7 @@ export function ProjectForm({ userId }: ProjectFormProps) {
     setDescription("");
     setProjectLink("");
 
-    setMessage(
-      "Your fan project has been submitted for review.",
-    );
+    setMessage("Your fan project has been submitted for review.");
 
     setIsSaving(false);
 
@@ -191,10 +186,7 @@ export function ProjectForm({ userId }: ProjectFormProps) {
               className="w-full rounded-2xl border border-[#2A2A2A] bg-white px-4 py-3.5 text-sm font-semibold text-[#111111] outline-none transition focus:border-[#E11D48] focus:ring-4 focus:ring-[#E11D48]/20"
             >
               {projectCategories.map((projectCategory) => (
-                <option
-                  key={projectCategory}
-                  value={projectCategory}
-                >
+                <option key={projectCategory} value={projectCategory}>
                   {projectCategory}
                 </option>
               ))}
@@ -214,9 +206,7 @@ export function ProjectForm({ userId }: ProjectFormProps) {
               name="organizerName"
               type="text"
               value={organizerName}
-              onChange={(event) =>
-                setOrganizerName(event.target.value)
-              }
+              onChange={(event) => setOrganizerName(event.target.value)}
               placeholder="Example: ARMY Bengaluru"
               maxLength={120}
               className="w-full rounded-2xl border border-[#2A2A2A] bg-white px-4 py-3.5 text-sm font-semibold text-[#111111] outline-none transition placeholder:text-[#777777] focus:border-[#E11D48] focus:ring-4 focus:ring-[#E11D48]/20"
@@ -231,14 +221,12 @@ export function ProjectForm({ userId }: ProjectFormProps) {
               Project Date
             </label>
 
-            <input
+            <DateInput
               id="project-date"
               name="projectDate"
-              type="date"
+              // type="date"
               value={projectDate}
-              onChange={(event) =>
-                setProjectDate(event.target.value)
-              }
+              onChange={(event) => setProjectDate(event.target.value)}
               className="w-full rounded-2xl border border-[#2A2A2A] bg-white px-4 py-3.5 text-sm font-semibold text-[#111111] outline-none transition focus:border-[#E11D48] focus:ring-4 focus:ring-[#E11D48]/20"
             />
           </div>
@@ -296,9 +284,7 @@ export function ProjectForm({ userId }: ProjectFormProps) {
             id="project-description"
             name="projectDescription"
             value={description}
-            onChange={(event) =>
-              setDescription(event.target.value)
-            }
+            onChange={(event) => setDescription(event.target.value)}
             placeholder="Explain the purpose of the project and how ARMY can join..."
             maxLength={1000}
             rows={5}
@@ -320,9 +306,7 @@ export function ProjectForm({ userId }: ProjectFormProps) {
             name="projectLink"
             type="url"
             value={projectLink}
-            onChange={(event) =>
-              setProjectLink(event.target.value)
-            }
+            onChange={(event) => setProjectLink(event.target.value)}
             placeholder="https://example.com"
             maxLength={500}
             className="w-full rounded-2xl border border-[#2A2A2A] bg-white px-4 py-3.5 text-sm font-semibold text-[#111111] outline-none transition placeholder:text-[#777777] focus:border-[#E11D48] focus:ring-4 focus:ring-[#E11D48]/20"

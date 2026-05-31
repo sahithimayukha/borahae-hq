@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import type { FanProject } from "@/types/database";
+import { DateInput } from "@/components/ui/date-input";
 
 type EditProjectFormProps = {
   project: FanProject;
@@ -35,10 +36,7 @@ function isValidOptionalUrl(value: string) {
   }
 }
 
-export function EditProjectForm({
-  project,
-  userId,
-}: EditProjectFormProps) {
+export function EditProjectForm({ project, userId }: EditProjectFormProps) {
   const router = useRouter();
 
   const [isEditing, setIsEditing] = useState(false);
@@ -50,20 +48,14 @@ export function EditProjectForm({
     project.organizer_name ?? "",
   );
 
-  const [projectDate, setProjectDate] = useState(
-    project.project_date ?? "",
-  );
+  const [projectDate, setProjectDate] = useState(project.project_date ?? "");
 
   const [country, setCountry] = useState(project.country ?? "");
   const [city, setCity] = useState(project.city ?? "");
 
-  const [description, setDescription] = useState(
-    project.description ?? "",
-  );
+  const [description, setDescription] = useState(project.description ?? "");
 
-  const [projectLink, setProjectLink] = useState(
-    project.project_link ?? "",
-  );
+  const [projectLink, setProjectLink] = useState(project.project_link ?? "");
 
   const [message, setMessage] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
@@ -87,9 +79,7 @@ export function EditProjectForm({
     setIsEditing(false);
   }
 
-  async function handleUpdate(
-    event: React.FormEvent<HTMLFormElement>,
-  ) {
+  async function handleUpdate(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
     setMessage("");
@@ -245,10 +235,7 @@ export function EditProjectForm({
             className="w-full rounded-2xl border border-[#2A2A2A] bg-white px-4 py-3 text-sm font-semibold text-[#111111] outline-none transition focus:border-[#E11D48] focus:ring-4 focus:ring-[#E11D48]/20"
           >
             {projectCategories.map((projectCategory) => (
-              <option
-                key={projectCategory}
-                value={projectCategory}
-              >
+              <option key={projectCategory} value={projectCategory}>
                 {projectCategory}
               </option>
             ))}
@@ -267,9 +254,7 @@ export function EditProjectForm({
             id={`edit-project-organizer-${project.id}`}
             type="text"
             value={organizerName}
-            onChange={(event) =>
-              setOrganizerName(event.target.value)
-            }
+            onChange={(event) => setOrganizerName(event.target.value)}
             placeholder="Example: ARMY Bengaluru"
             maxLength={120}
             className="w-full rounded-2xl border border-[#2A2A2A] bg-white px-4 py-3 text-sm font-semibold text-[#111111] outline-none transition placeholder:text-[#777777] focus:border-[#E11D48] focus:ring-4 focus:ring-[#E11D48]/20"
@@ -284,13 +269,11 @@ export function EditProjectForm({
             Project Date
           </label>
 
-          <input
+          <DateInput
             id={`edit-project-date-${project.id}`}
-            type="date"
+            // type="date"
             value={projectDate}
-            onChange={(event) =>
-              setProjectDate(event.target.value)
-            }
+            onChange={(event) => setProjectDate(event.target.value)}
             className="w-full rounded-2xl border border-[#2A2A2A] bg-white px-4 py-3 text-sm font-semibold text-[#111111] outline-none transition focus:border-[#E11D48] focus:ring-4 focus:ring-[#E11D48]/20"
           />
         </div>
@@ -345,9 +328,7 @@ export function EditProjectForm({
         <textarea
           id={`edit-project-description-${project.id}`}
           value={description}
-          onChange={(event) =>
-            setDescription(event.target.value)
-          }
+          onChange={(event) => setDescription(event.target.value)}
           maxLength={1000}
           rows={5}
           required
@@ -367,9 +348,7 @@ export function EditProjectForm({
           id={`edit-project-link-${project.id}`}
           type="url"
           value={projectLink}
-          onChange={(event) =>
-            setProjectLink(event.target.value)
-          }
+          onChange={(event) => setProjectLink(event.target.value)}
           placeholder="https://example.com"
           maxLength={500}
           className="w-full rounded-2xl border border-[#2A2A2A] bg-white px-4 py-3 text-sm font-semibold text-[#111111] outline-none transition placeholder:text-[#777777] focus:border-[#E11D48] focus:ring-4 focus:ring-[#E11D48]/20"

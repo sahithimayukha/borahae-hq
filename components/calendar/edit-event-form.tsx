@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import type { CalendarEvent } from "@/types/database";
+import { DateInput } from "@/components/ui/date-input";
 
 type EditEventFormProps = {
   event: CalendarEvent;
@@ -38,10 +39,7 @@ function isValidOptionalUrl(value: string) {
   }
 }
 
-export function EditEventForm({
-  event,
-  userId,
-}: EditEventFormProps) {
+export function EditEventForm({ event, userId }: EditEventFormProps) {
   const router = useRouter();
 
   const [isEditing, setIsEditing] = useState(false);
@@ -50,9 +48,7 @@ export function EditEventForm({
   const [category, setCategory] = useState(event.category);
   const [eventDate, setEventDate] = useState(event.event_date);
   const [location, setLocation] = useState(event.location ?? "");
-  const [description, setDescription] = useState(
-    event.description ?? "",
-  );
+  const [description, setDescription] = useState(event.description ?? "");
   const [eventLink, setEventLink] = useState(event.event_link ?? "");
   const [isGlobal, setIsGlobal] = useState(event.is_global);
 
@@ -77,9 +73,7 @@ export function EditEventForm({
     setIsEditing(false);
   }
 
-  async function handleUpdate(
-    formEvent: React.FormEvent<HTMLFormElement>,
-  ) {
+  async function handleUpdate(formEvent: React.FormEvent<HTMLFormElement>) {
     formEvent.preventDefault();
 
     setMessage("");
@@ -209,9 +203,7 @@ export function EditEventForm({
             id={`edit-title-${event.id}`}
             type="text"
             value={title}
-            onChange={(inputEvent) =>
-              setTitle(inputEvent.target.value)
-            }
+            onChange={(inputEvent) => setTitle(inputEvent.target.value)}
             maxLength={120}
             required
             className="w-full rounded-2xl border border-[#2A2A2A] bg-white px-4 py-3 text-sm font-semibold text-[#111111] outline-none transition focus:border-[#E11D48] focus:ring-4 focus:ring-[#E11D48]/20"
@@ -229,9 +221,7 @@ export function EditEventForm({
           <select
             id={`edit-category-${event.id}`}
             value={category}
-            onChange={(inputEvent) =>
-              setCategory(inputEvent.target.value)
-            }
+            onChange={(inputEvent) => setCategory(inputEvent.target.value)}
             className="w-full rounded-2xl border border-[#2A2A2A] bg-white px-4 py-3 text-sm font-semibold text-[#111111] outline-none transition focus:border-[#E11D48] focus:ring-4 focus:ring-[#E11D48]/20"
           >
             {eventCategories.map((eventCategory) => (
@@ -250,13 +240,11 @@ export function EditEventForm({
             Event Date
           </label>
 
-          <input
+          <DateInput
             id={`edit-date-${event.id}`}
-            type="date"
+            // type="date"
             value={eventDate}
-            onChange={(inputEvent) =>
-              setEventDate(inputEvent.target.value)
-            }
+            onChange={(inputEvent) => setEventDate(inputEvent.target.value)}
             required
             className="w-full rounded-2xl border border-[#2A2A2A] bg-white px-4 py-3 text-sm font-semibold text-[#111111] outline-none transition focus:border-[#E11D48] focus:ring-4 focus:ring-[#E11D48]/20"
           />
@@ -274,9 +262,7 @@ export function EditEventForm({
             id={`edit-location-${event.id}`}
             type="text"
             value={location}
-            onChange={(inputEvent) =>
-              setLocation(inputEvent.target.value)
-            }
+            onChange={(inputEvent) => setLocation(inputEvent.target.value)}
             placeholder="Example: Online, Seoul, Bengaluru"
             maxLength={120}
             className="w-full rounded-2xl border border-[#2A2A2A] bg-white px-4 py-3 text-sm font-semibold text-[#111111] outline-none transition placeholder:text-[#777777] focus:border-[#E11D48] focus:ring-4 focus:ring-[#E11D48]/20"
@@ -295,9 +281,7 @@ export function EditEventForm({
         <textarea
           id={`edit-description-${event.id}`}
           value={description}
-          onChange={(inputEvent) =>
-            setDescription(inputEvent.target.value)
-          }
+          onChange={(inputEvent) => setDescription(inputEvent.target.value)}
           placeholder="Add a short note about the event..."
           maxLength={600}
           rows={4}
@@ -317,9 +301,7 @@ export function EditEventForm({
           id={`edit-link-${event.id}`}
           type="url"
           value={eventLink}
-          onChange={(inputEvent) =>
-            setEventLink(inputEvent.target.value)
-          }
+          onChange={(inputEvent) => setEventLink(inputEvent.target.value)}
           placeholder="https://example.com"
           maxLength={500}
           className="w-full rounded-2xl border border-[#2A2A2A] bg-white px-4 py-3 text-sm font-semibold text-[#111111] outline-none transition placeholder:text-[#777777] focus:border-[#E11D48] focus:ring-4 focus:ring-[#E11D48]/20"
@@ -330,9 +312,7 @@ export function EditEventForm({
         <input
           type="checkbox"
           checked={isGlobal}
-          onChange={(inputEvent) =>
-            setIsGlobal(inputEvent.target.checked)
-          }
+          onChange={(inputEvent) => setIsGlobal(inputEvent.target.checked)}
           className="mt-1 h-4 w-4 accent-[#E11D48]"
         />
 

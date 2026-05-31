@@ -6,6 +6,7 @@ import { PageHero } from "@/components/app/page-hero";
 import { SubmitLoadingButton } from "@/components/ui/submit-loading-button";
 import { createClient } from "@/lib/supabase/server";
 import type { OfficialNoticeImport, Profile } from "@/types/database";
+import { DateInput } from "@/components/ui/date-input";
 
 type AdminToolCardProps = {
   eyebrow: string;
@@ -438,9 +439,9 @@ function OfficialUpdatesInbox({
                   <div className="grid gap-4 md:grid-cols-2">
                     <label className="grid gap-2 text-xs font-black uppercase tracking-widesttext-[#111111]">
                       Date
-                      <input
+                      <DateInput
                         name="publicDate"
-                        type="date"
+                        // type="date"
                         required
                         defaultValue={notice.notice_date ?? ""}
                         className="rounded-2xl border border-[#2A2A2A] bg-white px-4 py-3 text-sm font-semibold normal-case tracking-normal text-[#111111] outline-none focus:border-[#E11D48]"
