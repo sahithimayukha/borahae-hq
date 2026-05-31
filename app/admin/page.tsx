@@ -3,6 +3,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { AppShell } from "@/components/app/app-shell";
 import { PageHero } from "@/components/app/page-hero";
+import { SubmitLoadingButton } from "@/components/ui/submit-loading-button";
 import { createClient } from "@/lib/supabase/server";
 import type { OfficialNoticeImport, Profile } from "@/types/database";
 
@@ -27,9 +28,29 @@ type AdminPageProps = {
   searchParams?: Promise<{
     sync?: string;
     added?: string;
+    publish?: string;
     detail?: string;
   }>;
 };
+
+const publishCategories = [
+  "Anniversary",
+  "Birthday",
+  "Comeback",
+  "Concert",
+  "Soundcheck",
+  "Streaming",
+  "Online Event",
+  "Ticketing",
+  "Voting",
+  "Pop-Up",
+  "Exhibition",
+  "Photo Experience",
+  "Light Show",
+  "Charity",
+  "Meetup",
+  "Past",
+];
 
 function formatDetectedDate(date: string) {
   return new Intl.DateTimeFormat("en", {
@@ -89,6 +110,79 @@ async function updateNoticeStatus(formData: FormData) {
   revalidatePath("/admin");
 }
 
+async function publishOfficialNotice(formData: FormData) {
+  "use server";
+
+  const noticeId = String(formData.get("noticeId") ?? "").trim();
+
+  const destination = String(formData.get("destination") ?? "").trim();
+
+  const publicTitle = String(formData.get("publicTitle") ?? "").trim();
+
+  const publicCategory = String(formData.get("publicCategory") ?? "").trim();
+
+  const publicDate = String(formData.get("publicDate") ?? "").trim();
+
+  const publicDescription = String(
+    formData.get("publicDescription") ?? "",
+  ).trim();
+
+  const publicLocation = String(formData.get("publicLocation") ?? "").trim();
+
+  const publicLink = String(formData.get("publicLink") ?? "").trim();
+
+  const publicIsGlobal = formData.get("publicIsGlobal") === "on";
+
+  if (
+    !noticeId ||
+    !destination ||
+    !publicTitle ||
+    !publicCategory ||
+    !publicDate
+  ) {
+    redirect(
+      `/admin?publish=error&detail=${encodeURIComponent(
+        "Destination, title, category, and date are required.",
+      )}`,
+    );
+  }
+
+  const supabase = await createClient();
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    redirect("/login");
+  }
+
+  const { error } = await supabase.rpc("publish_official_notice", {
+    notice_id: noticeId,
+    destination,
+    public_title: publicTitle,
+    public_category: publicCategory,
+    public_date: publicDate,
+    public_description: publicDescription,
+    public_location: publicLocation,
+    public_link: publicLink,
+    public_is_global: publicIsGlobal,
+  });
+
+  if (error) {
+    redirect(
+      `/admin?publish=error&detail=${encodeURIComponent(error.message)}`,
+    );
+  }
+
+  revalidatePath("/admin");
+  revalidatePath("/calendar");
+  revalidatePath("/projects");
+  revalidatePath("/dashboard");
+
+  redirect("/admin?publish=success");
+}
+
 async function runOfficialSourceSync() {
   "use server";
 
@@ -120,38 +214,37 @@ async function runOfficialSourceSync() {
     redirect("/login");
   }
 
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const functionUrl = process.env.SUPABASE_OFFICIAL_SYNC_URL?.trim();
 
   const supabasePublicKey =
     process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ??
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
-  if (!supabaseUrl || !supabasePublicKey) {
+  if (!functionUrl || !supabasePublicKey) {
     redirect(
-      "/admin?sync=error&detail=Missing Supabase environment variables.",
+      `/admin?sync=error&detail=${encodeURIComponent(
+        "Missing SUPABASE_OFFICIAL_SYNC_URL or Supabase public key.",
+      )}`,
     );
   }
 
-  const response = await fetch(
-    `${supabaseUrl}/functions/v1/sync-official-bts-sources`,
-    {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${session.access_token}`,
-        apikey: supabasePublicKey,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({}),
-      cache: "no-store",
+  const response = await fetch(functionUrl, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${session.access_token}`,
+      apikey: supabasePublicKey,
+      "Content-Type": "application/json",
     },
-  );
+    body: JSON.stringify({}),
+    cache: "no-store",
+  });
 
   const responseText = await response.text();
 
   if (!response.ok) {
     redirect(
       `/admin?sync=error&detail=${encodeURIComponent(
-        responseText.slice(0, 220),
+        responseText.slice(0, 300),
       )}`,
     );
   }
@@ -162,7 +255,9 @@ async function runOfficialSourceSync() {
     result = JSON.parse(responseText) as OfficialSyncResponse;
   } catch {
     redirect(
-      "/admin?sync=error&detail=The Edge Function returned an invalid response.",
+      `/admin?sync=error&detail=${encodeURIComponent(
+        "The Edge Function returned an invalid response.",
+      )}`,
     );
   }
 
@@ -227,17 +322,17 @@ function OfficialUpdatesInbox({
         </p>
 
         <form action={runOfficialSourceSync} className="mt-6">
-          <button
-            type="submit"
+          <SubmitLoadingButton
+            pendingText="Checking..."
             className="font-era-label inline-flex rounded-full bg-[#E11D48] px-5 py-3 text-[10px] text-white! transition hover:-translate-y-0.5 hover:bg-[#C5163D]"
           >
             Check Official Sources Now
-          </button>
+          </SubmitLoadingButton>
         </form>
       </div>
 
       {notices.length > 0 ? (
-        <div className="mt-8 grid min-w-0 gap-4">
+        <div className="mt-8 grid min-w-0 gap-5">
           {notices.map((notice) => (
             <article
               key={notice.id}
@@ -263,20 +358,6 @@ function OfficialUpdatesInbox({
                 </span>
               </div>
 
-              <div className="mt-5 flex flex-wrap gap-2 text-xs font-bold text-[#111111]">
-                {notice.suggested_destination ? (
-                  <span className="rounded-full bg-[#F7F7F7] px-4 py-2">
-                    {notice.suggested_destination}
-                  </span>
-                ) : null}
-
-                {notice.suggested_category ? (
-                  <span className="rounded-full bg-[#F7F7F7] px-4 py-2">
-                    {notice.suggested_category}
-                  </span>
-                ) : null}
-              </div>
-
               {notice.raw_summary ? (
                 <details className="mt-5 rounded-2xl bg-[#F7F7F7] p-4">
                   <summary className="cursor-pointer text-xs font-black uppercase tracking-widest text-[#E11D48]">
@@ -289,37 +370,154 @@ function OfficialUpdatesInbox({
                 </details>
               ) : null}
 
-              <div className="mt-5 flex flex-wrap items-center gap-3">
+              <div className="mt-5">
                 <a
                   href={notice.source_url}
                   target="_blank"
                   rel="noreferrer"
-                  style={{
-                    fontSize: "10px",
-                    lineHeight: "1",
-                    fontWeight: 900,
-                  }}
                   className="font-era-label inline-flex rounded-full bg-[#111111] px-4 py-3 text-[9px] text-white! transition hover:bg-[#E11D48]"
                 >
                   Open Official Page
                 </a>
+              </div>
 
-                <form action={updateNoticeStatus}>
+              <details className="mt-5 rounded-2xl border border-[#2A2A2A] bg-[#FFF8F9] p-4">
+                <summary className="cursor-pointer text-xs font-black uppercase tracking-widest text-[#E11D48]">
+                  Publish Official Record
+                </summary>
+
+                <form
+                  action={publishOfficialNotice}
+                  className="mt-5 grid gap-4"
+                >
                   <input type="hidden" name="noticeId" value={notice.id} />
 
-                  <input type="hidden" name="reviewStatus" value="approved" />
+                  <div className="grid gap-4 md:grid-cols-2">
+                    <label className="grid gap-2 text-xs font-black uppercase tracking-widest text-[#111111]">
+                      Destination
+                      <select
+                        name="destination"
+                        required
+                        defaultValue="Calendar"
+                        className="rounded-2xl border border-[#2A2A2A] bg-white px-4 py-3 text-sm font-semibold normal-case tracking-normal text-[#111111] outline-none focus:border-[#E11D48]"
+                      >
+                        <option value="Calendar">Calendar</option>
 
-                  <button
-                    type="submit"
+                        <option value="Fan Projects">Fan Projects</option>
+                      </select>
+                    </label>
+
+                    <label className="grid gap-2 text-xs font-black uppercase tracking-widest text-[#111111]">
+                      Category
+                      <select
+                        name="publicCategory"
+                        required
+                        defaultValue="Fan Event"
+                        className="rounded-2xl border border-[#2A2A2A] bg-white px-4 py-3 text-sm font-semibold normal-case tracking-normal text-[#111111] outline-none focus:border-[#E11D48]"
+                      >
+                        {publishCategories.map((category) => (
+                          <option key={category} value={category}>
+                            {category}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+                  </div>
+
+                  <label className="grid gap-2 text-xs font-black uppercase tracking-widest text-[#111111]">
+                    Public Title
+                    <input
+                      name="publicTitle"
+                      type="text"
+                      required
+                      defaultValue={notice.notice_title}
+                      className="rounded-2xl border border-[#2A2A2A] bg-white px-4 py-3 text-sm font-semibold normal-case tracking-normal text-[#111111] outline-none focus:border-[#E11D48]"
+                    />
+                  </label>
+
+                  <div className="grid gap-4 md:grid-cols-2">
+                    <label className="grid gap-2 text-xs font-black uppercase tracking-widesttext-[#111111]">
+                      Date
+                      <input
+                        name="publicDate"
+                        type="date"
+                        required
+                        defaultValue={notice.notice_date ?? ""}
+                        className="rounded-2xl border border-[#2A2A2A] bg-white px-4 py-3 text-sm font-semibold normal-case tracking-normal text-[#111111] outline-none focus:border-[#E11D48]"
+                      />
+                    </label>
+
+                    <label className="grid gap-2 text-xs font-black uppercase tracking-widest text-[#111111]">
+                      Location
+                      <input
+                        name="publicLocation"
+                        type="text"
+                        placeholder="Global, Seoul, Busan..."
+                        className="rounded-2xl border border-[#2A2A2A] bg-white px-4 py-3 text-sm font-semibold normal-case tracking-normal text-[#111111] outline-none placeholder:text-[#777777] focus:border-[#E11D48]"
+                      />
+                    </label>
+                  </div>
+
+                  <label className="grid gap-2 text-xs font-black uppercase tracking-widest text-[#111111]">
+                    Description
+                    <textarea
+                      name="publicDescription"
+                      rows={4}
+                      defaultValue={notice.raw_summary ?? ""}
+                      className="resize-y rounded-2xl border border-[#2A2A2A] bg-white px-4 py-3 text-sm font-semibold leading-6 normal-case tracking-normal text-[#111111] outline-none focus:border-[#E11D48]"
+                    />
+                  </label>
+
+                  <label className="grid gap-2 text-xs font-black uppercase tracking-widest text-[#111111]">
+                    Official Link
+                    <input
+                      name="publicLink"
+                      type="url"
+                      defaultValue={notice.source_url}
+                      className="rounded-2xl border border-[#2A2A2A] bg-white px-4 py-3 text-sm font-semibold normal-case tracking-normal text-[#111111] outline-none focus:border-[#E11D48]"
+                    />
+                  </label>
+
+                  <label className="flex items-center gap-3 text-xs font-black uppercase tracking-widest text-[#111111]">
+                    <input
+                      name="publicIsGlobal"
+                      type="checkbox"
+                      className="h-4 w-4 accent-[#E11D48]"
+                    />
+                    Global Event
+                  </label>
+
+                  <SubmitLoadingButton
+                    pendingText="Publishing..."
                     style={{
                       fontSize: "10px",
                       lineHeight: "1",
                       fontWeight: 900,
                     }}
-                    className="font-era-label inline-flex rounded-full bg-[#E11D48] px-4 py-3 text-[9px] text-white! transition hover:bg-[#C5163D]"
+                    className="font-era-label inline-flex w-fit rounded-full bg-[#E11D48] px-5 py-3 text-[10px] text-white! transition hover:bg-[#C5163D]"
                   >
-                    Mark Reviewed
-                  </button>
+                    Publish Official Record
+                  </SubmitLoadingButton>
+                </form>
+              </details>
+
+              <div className="mt-5 flex flex-wrap items-center gap-3">
+                <form action={updateNoticeStatus}>
+                  <input type="hidden" name="noticeId" value={notice.id} />
+
+                  <input type="hidden" name="reviewStatus" value="approved" />
+
+                  <SubmitLoadingButton
+                    pendingText="Saving..."
+                    style={{
+                      fontSize: "10px",
+                      lineHeight: "1",
+                      fontWeight: 900,
+                    }}
+                    className="font-era-label inline-flex rounded-full border border-[#E11D48] bg-white px-4 py-3 text-[9px] text-[#B91C3B] transition hover:bg-[#FFF1F3]"
+                  >
+                    Mark Reviewed Without Publishing
+                  </SubmitLoadingButton>
                 </form>
 
                 <form action={updateNoticeStatus}>
@@ -327,8 +525,8 @@ function OfficialUpdatesInbox({
 
                   <input type="hidden" name="reviewStatus" value="rejected" />
 
-                  <button
-                    type="submit"
+                  <SubmitLoadingButton
+                    pendingText="Dismissing..."
                     style={{
                       fontSize: "10px",
                       lineHeight: "1",
@@ -337,7 +535,7 @@ function OfficialUpdatesInbox({
                     className="font-era-label inline-flex rounded-full border border-[#2A2A2A] bg-white px-4 py-3 text-[9px] text-[#111111] transition hover:bg-[#F7F7F7]"
                   >
                     Dismiss
-                  </button>
+                  </SubmitLoadingButton>
                 </form>
               </div>
             </article>
@@ -345,11 +543,11 @@ function OfficialUpdatesInbox({
         </div>
       ) : (
         <div className="mt-8 rounded-[1.4rem] border border-white/15 bg-white/5 p-5">
-          <p className="font-era text-2xl leading-[1.08] text-[#111111] ">
+          <p className="font-era text-2xl leading-[1.08] text-[#111111]">
             Inbox Clear
           </p>
 
-          <p className="mt-3 max-w-xl text-sm leading-6 text-[#111111] /60">
+          <p className="mt-3 max-w-xl text-sm leading-6 text-[#111111]/60">
             No new official-source changes are waiting for review. The daily
             collector will place future updates here automatically.
           </p>
@@ -364,10 +562,12 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
 
   const syncStatus = resolvedSearchParams?.sync ?? "";
 
+  const publishStatus = resolvedSearchParams?.publish ?? "";
+
   const addedCount =
     Number.parseInt(resolvedSearchParams?.added ?? "0", 10) || 0;
 
-  const syncErrorDetail = resolvedSearchParams?.detail ?? "";
+  const detail = resolvedSearchParams?.detail ?? "";
 
   const supabase = await createClient();
 
@@ -393,9 +593,7 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
 
   const { data: noticeData } = await supabase
     .from("official_notice_imports")
-    .select(
-      "id, source_name, source_url, notice_title, notice_date, raw_summary, suggested_destination, suggested_category, review_status, discovered_at",
-    )
+    .select("*")
     .eq("review_status", "pending")
     .order("discovered_at", {
       ascending: false,
@@ -409,7 +607,7 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
       <PageHero
         eyebrow="Admin"
         title="BorahaeHQ Admin"
-        description="Manage moderation, private support requests, and newly detected updates from official BTS sources."
+        description="Manage moderation, support requests, and newly detected updates from official BTS sources."
       />
 
       {syncStatus === "success" ? (
@@ -432,9 +630,32 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
             Official-source check could not run.
           </p>
 
-          <p className="mt-1 text-xs font-semibold">
-            {syncErrorDetail ||
+          <p className="mt-1 wrap-break-word text-xs font-semibold">
+            {detail ||
               "Try again shortly or inspect the Edge Function logs in Supabase."}
+          </p>
+        </div>
+      ) : null}
+
+      {publishStatus === "success" ? (
+        <div className="rounded-2xl border border-[#166534] bg-[#DCFCE7] p-4 text-[#166534]">
+          <p className="text-sm font-black">Official record published.</p>
+
+          <p className="mt-1 text-xs font-semibold">
+            The locked official record is now visible in its selected public
+            section.
+          </p>
+        </div>
+      ) : null}
+
+      {publishStatus === "error" ? (
+        <div className="rounded-2xl border border-[#B91C3B] bg-[#FFF1F3] p-4 text-[#B91C3B]">
+          <p className="text-sm font-black">
+            Official record could not be published.
+          </p>
+
+          <p className="mt-1 wrap-break-word text-xs font-semibold">
+            {detail || "Check the required fields and try again."}
           </p>
         </div>
       ) : null}
@@ -461,3 +682,4 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
     </AppShell>
   );
 }
+
