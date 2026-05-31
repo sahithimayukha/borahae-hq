@@ -207,3 +207,47 @@ a {
   text-transform: uppercase;
   letter-spacing: 0.16em;
 }
+
+/* =========================================================
+   IOS SAFARI DATE INPUT FIX
+   Keeps date fields visible, tappable, and readable on iPhone.
+   Applies globally to Calendar, Fan Projects, Memory Vault,
+   Profile, Admin forms, and future date inputs.
+   ========================================================= */
+
+input[type="date"] {
+  position: relative;
+  display: block;
+  width: 100%;
+  min-height: 3.5rem;
+  color: #111111 !important;
+  -webkit-text-fill-color: #111111 !important;
+  background-color: #ffffff;
+  color-scheme: light;
+  opacity: 1;
+  appearance: auto;
+  -webkit-appearance: auto;
+}
+
+input[type="date"]::-webkit-date-and-time-value {
+  min-height: 1.5rem;
+  text-align: left;
+}
+
+input[type="date"]::-webkit-datetime-edit {
+  display: block;
+  padding: 0;
+  color: #111111;
+  -webkit-text-fill-color: #111111;
+}
+
+input[type="date"]::-webkit-datetime-edit-fields-wrapper {
+  display: flex;
+  align-items: center;
+}
+
+input[type="date"]::-webkit-calendar-picker-indicator {
+  display: block;
+  opacity: 1;
+  cursor: pointer;
+}
